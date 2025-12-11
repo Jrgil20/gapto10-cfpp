@@ -1,6 +1,7 @@
+import { createElement } from 'react'
 import { Subject, Config } from '../types'
 import { Card } from './ui/card'
-import { CheckCircle, WarningCircle, Target } from '@phosphor-icons/react'
+import { CheckCircle, WarningCircle, Target, X, Question } from '@phosphor-icons/react'
 
 interface ProgressVisualizationProps {
   subject: Subject
@@ -11,6 +12,68 @@ interface ProgressVisualizationProps {
   evaluatedWeight: number
   evaluatedTheoryWeight?: number
   evaluatedPracticeWeight?: number
+}
+
+function getStatusIcon(
+  currentPercentage: number,
+  evaluatedWeight: number,
+  percentageOfEvaluated: number,
+  passingPoint: number,
+  canStillPass: boolean
+) {
+  if (evaluatedWeight === 0) {
+    return {
+      icon: Question,
+      color: 'text-muted-foreground',
+      label: 'Sin evaluaciones'
+    }
+  }
+
+  if (!canStillPass) {
+    return {
+      icon: X,
+      color: 'text-destructive',
+      label: 'Insuficiente para aprobar'
+    }
+  }
+
+  if (currentPercentage >= passingPoint) {
+    if (percentageOfEvaluated >= 75) {
+      return {
+        icon: CheckCircle,
+        color: 'text-accent',
+        label: 'Aprobado con buen rendimiento'
+      }
+    } else {
+      return {
+        icon: CheckCircle,
+        color: 'text-orange',
+        label: 'Aprobado (rendimiento moderado)'
+      }
+    }
+  }
+
+  if (percentageOfEvaluated < 40) {
+    return {
+      icon: WarningCircle,
+      color: 'text-destructive',
+      label: 'Rendimiento bajo'
+    }
+  }
+
+  if (percentageOfEvaluated >= 40 && percentageOfEvaluated < 70) {
+    return {
+      icon: WarningCircle,
+      color: 'text-orange',
+      label: 'Rendimiento moderado'
+    }
+  }
+
+  return {
+    icon: CheckCircle,
+    color: 'text-accent',
+    label: 'Buen rendimiento'
+  }
 }
 
 export function ProgressVisualization({
@@ -43,6 +106,19 @@ export function ProgressVisualization({
     ? currentPracticePercentage >= practiceTarget
     : true
 
+  const percentageOfEvaluated = evaluatedWeight > 0 ? (currentPercentage / evaluatedWeight) * 100 : 0
+  const remainingWeight = 100 - evaluatedWeight
+  const maxPossiblePercentage = currentPercentage + remainingWeight
+  const canStillPass = maxPossiblePercentage >= passingPoint
+
+  const { icon, color, label } = getStatusIcon(
+    currentPercentage, 
+    evaluatedWeight, 
+    percentageOfEvaluated, 
+    passingPoint, 
+    canStillPass
+  )
+
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-6">
@@ -60,11 +136,16 @@ export function ProgressVisualization({
                 {currentPercentage.toFixed(2)}%
               </span>
             </div>
-            {isApproved ? (
-              <CheckCircle className="text-accent" weight="fill" size={32} />
-            ) : (
-              <WarningCircle className="text-destructive" weight="fill" size={32} />
-            )}
+            <div className="flex flex-col items-center gap-1">
+              {createElement(icon, { 
+                className: color, 
+                weight: "fill", 
+                size: 32 
+              })}
+              <span className={`text-xs font-medium ${color}`}>
+                {label}
+              </span>
+            </div>
           </div>
         </div>
 
