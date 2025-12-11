@@ -46,12 +46,13 @@ export function calculateRequiredNotes(
       const isTheory = eval_.section === 'theory'
       const needed = isTheory ? theoryNeeded : practiceNeeded
       const pending = isTheory ? pendingTheory : pendingPractice
+      const completed = completedEvaluations.filter(e => e.section === eval_.section)
       
       return {
         evaluationId: eval_.id,
         pessimistic: calculatePessimisticNote(eval_, needed, pending),
-        normal: calculateNormalNote(eval_, completedEvaluations.filter(e => e.section === eval_.section)),
-        optimistic: calculateOptimisticNote(eval_, needed, pending)
+        normal: calculateNormalNote(eval_, completed, needed, pending),
+        optimistic: calculateOptimisticNote(eval_, needed, pending, targetPercentage)
       }
     })
     
@@ -71,8 +72,8 @@ export function calculateRequiredNotes(
     const requiredNotes = pendingEvaluations.map(eval_ => ({
       evaluationId: eval_.id,
       pessimistic: calculatePessimisticNote(eval_, needed, pendingEvaluations),
-      normal: calculateNormalNote(eval_, completedEvaluations),
-      optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations)
+      normal: calculateNormalNote(eval_, completedEvaluations, needed, pendingEvaluations),
+      optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations, targetPercentage)
     }))
     
     return {
@@ -106,41 +107,70 @@ function calculatePessimisticNote(
 
 function calculateNormalNote(
   evaluation: Evaluation,
-  completedEvaluations: Evaluation[]
-): number {
-  if (completedEvaluations.length === 0) {
-    return evaluation.maxPoints * 0.6
-  }
-  
-  const averagePercentage = completedEvaluations.reduce((sum, eval_) => {
-    return sum + (eval_.obtainedPoints! / eval_.maxPoints)
-  }, 0) / completedEvaluations.length
-  
-  const similarWeight = completedEvaluations.find(e => 
-    Math.abs(e.weight - evaluation.weight) < 5
-  )
-  
-  if (similarWeight) {
-    const similarPercentage = similarWeight.obtainedPoints! / similarWeight.maxPoints
-    return Math.min(evaluation.maxPoints, similarPercentage * evaluation.maxPoints)
-  }
-  
-  return Math.min(evaluation.maxPoints, averagePercentage * evaluation.maxPoints)
-}
-
-function calculateOptimisticNote(
-  evaluation: Evaluation,
+  completedEvaluations: Evaluation[],
   neededPercentage: number,
   pendingEvaluations: Evaluation[]
 ): number {
   if (pendingEvaluations.length === 0) return 0
   
   const totalPendingWeight = pendingEvaluations.reduce((sum, e) => sum + e.weight, 0)
+  
+  let targetPercentageForEval: number
+  
+  if (completedEvaluations.length === 0) {
+    targetPercentageForEval = 0.6
+  } else {
+    const similarWeight = completedEvaluations.find(e => 
+      Math.abs(e.weight - evaluation.weight) < 5
+    )
+    
+    if (similarWeight) {
+      targetPercentageForEval = similarWeight.obtainedPoints! / similarWeight.maxPoints
+    } else {
+      const averagePercentage = completedEvaluations.reduce((sum, eval_) => {
+        return sum + (eval_.obtainedPoints! / eval_.maxPoints)
+      }, 0) / completedEvaluations.length
+      targetPercentageForEval = averagePercentage
+    }
+  }
+  
+  const sortedByWeight = [...pendingEvaluations].sort((a, b) => b.weight - a.weight)
+  const evalIndex = sortedByWeight.findIndex(e => e.id === evaluation.id)
+  
   const weightRatio = evaluation.weight / totalPendingWeight
-  const percentageForThisEval = neededPercentage * weightRatio
-  const requiredPercentage = percentageForThisEval / evaluation.weight
+  const balanceFactor = 1 - (evalIndex / pendingEvaluations.length) * 0.2
+  
+  const percentageForThisEval = (neededPercentage * weightRatio) * balanceFactor
+  const requiredPercentage = Math.max(targetPercentageForEval, percentageForThisEval / evaluation.weight)
   
   return Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+}
+
+function calculateOptimisticNote(
+  evaluation: Evaluation,
+  neededPercentage: number,
+  pendingEvaluations: Evaluation[],
+  targetPercentage: number
+): number {
+  if (pendingEvaluations.length === 0) return 0
+  
+  const totalPendingWeight = pendingEvaluations.reduce((sum, e) => sum + e.weight, 0)
+  
+  const sortedByWeight = [...pendingEvaluations].sort((a, b) => a.weight - b.weight)
+  const evalIndex = sortedByWeight.findIndex(e => e.id === evaluation.id)
+  
+  const weightRatio = evaluation.weight / totalPendingWeight
+  const optimisticFactor = 1 + (evalIndex / pendingEvaluations.length) * 0.15
+  
+  const percentageForThisEval = (neededPercentage * weightRatio) * optimisticFactor
+  const requiredPercentage = percentageForThisEval / evaluation.weight
+  
+  const targetNotePercentage = targetPercentage / 100
+  const aspirationalNote = targetNotePercentage * evaluation.maxPoints
+  
+  const calculatedNote = Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+  
+  return Math.max(calculatedNote, Math.min(evaluation.maxPoints, aspirationalNote))
 }
 
 export function validateWeights(subject: Subject): { isValid: boolean; message?: string } {

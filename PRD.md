@@ -33,26 +33,26 @@ Esta aplicación requiere múltiples funcionalidades avanzadas: gestión de mate
 - **Progression**: Click en campo → Input numérico aparece → Ingresa nota → Presiona Enter o sale del campo → Nota se guarda → Cálculos se actualizan automáticamente
 - **Success criteria**: La nota se guarda y los cálculos de notas necesarias se recalculan instantáneamente
 
-### 4. Cálculo de Notas Necesarias (Pesimista)
-- **Functionality**: Calcular las notas mínimas requeridas en evaluaciones pendientes para aprobar
-- **Purpose**: Estrategia defensiva que distribuye el esfuerzo según el peso (evaluaciones de mayor peso requieren menos nota)
-- **Trigger**: Automático al ingresar o cambiar notas
-- **Progression**: Usuario ingresa nota → Sistema detecta evaluaciones pendientes → Calcula distribución optimizando por peso → Muestra notas necesarias en cada evaluación pendiente
-- **Success criteria**: Las notas calculadas suman exactamente el mínimo para aprobar (50%), priorizando notas más bajas en evaluaciones de mayor peso
+### 4. Cálculo de Notas Necesarias (Pesimista) - MODO PREDETERMINADO
+- **Functionality**: Calcular las notas mínimas requeridas en evaluaciones pendientes para aprobar, balanceando correctamente por peso
+- **Purpose**: Estrategia defensiva que distribuye el esfuerzo según el peso (evaluaciones de mayor peso requieren menos nota, evaluaciones de menor peso permiten obtener notas más altas)
+- **Trigger**: Automático al ingresar o cambiar notas (modo predeterminado)
+- **Progression**: Usuario ingresa nota → Sistema detecta evaluaciones pendientes → Calcula distribución optimizando por peso con factor inverso → Muestra notas necesarias en cada evaluación pendiente
+- **Success criteria**: Las notas calculadas suman exactamente el mínimo para aprobar (50%), priorizando notas más bajas en evaluaciones de mayor peso y notas más altas en evaluaciones de menor peso (considerando que es más fácil obtener notas altas en evaluaciones de bajo peso)
 
 ### 5. Cálculo de Notas Necesarias (Normal)
-- **Functionality**: Calcular notas esperadas basándose en el rendimiento actual del estudiante
-- **Purpose**: Estrategia realista que proyecta el rendimiento actual hacia evaluaciones pendientes
-- **Trigger**: Automático al ingresar o cambiar notas, usuario puede cambiar a vista "Normal"
-- **Progression**: Usuario tiene notas ingresadas → Sistema analiza promedio ponderado actual → Proyecta notas similares según peso de evaluaciones → Muestra meta realista (11-13/20)
-- **Success criteria**: Las notas calculadas reflejan el patrón de rendimiento actual y suman a una meta razonable
+- **Functionality**: Calcular notas esperadas basándose en el rendimiento actual del estudiante, balanceando por peso de evaluaciones
+- **Purpose**: Estrategia realista que proyecta el rendimiento actual hacia evaluaciones pendientes considerando el peso de cada una
+- **Trigger**: Usuario puede cambiar a vista "Normal" desde las tabs
+- **Progression**: Usuario tiene notas ingresadas → Sistema analiza promedio y rendimiento en evaluaciones similares → Calcula distribución balanceada por peso → Proyecta notas similares ajustadas según peso de evaluaciones → Muestra meta realista (11-13/20)
+- **Success criteria**: Las notas calculadas reflejan el patrón de rendimiento actual, están balanceadas por peso y suman a una meta razonable
 
 ### 6. Cálculo de Notas Necesarias (Optimista)
-- **Functionality**: Calcular notas necesarias para alcanzar una meta específica (ej: 19/20 final)
-- **Purpose**: Estrategia ambiciosa donde el usuario define su objetivo de nota final
-- **Trigger**: Usuario activa modo optimista e ingresa nota objetivo
-- **Progression**: Click modo "Optimista" → Input aparece para meta → Ingresa nota deseada (ej: 95%) → Sistema calcula distribución necesaria → Muestra notas requeridas en cada evaluación
-- **Success criteria**: Las notas calculadas suman exactamente la meta ingresada, distribuyendo equitativamente según pesos
+- **Functionality**: Calcular notas necesarias para alcanzar una meta específica (ej: 19/20 final), distribuyendo con balance por peso
+- **Purpose**: Estrategia ambiciosa donde el usuario aspira a notas altas, con distribución inteligente según peso de evaluaciones
+- **Trigger**: Usuario activa modo "Optimista" desde las tabs
+- **Progression**: Usuario selecciona modo "Optimista" → Sistema calcula distribución necesaria para alcanzar meta alta (85-95%) → Balancea por peso con factor optimista (notas más altas en evaluaciones de menor peso) → Muestra notas requeridas en cada evaluación
+- **Success criteria**: Las notas calculadas están balanceadas por peso y suman a una meta ambiciosa alcanzable (considerando que en evaluaciones de menor peso es más realista obtener notas altas)
 
 ### 7. Validación Teoría/Práctica
 - **Functionality**: Verificar aprobación individual de teoría y práctica cuando están separadas

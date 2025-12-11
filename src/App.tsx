@@ -27,7 +27,7 @@ function App() {
   const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | undefined>(undefined)
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [calculationMode, setCalculationMode] = useState<CalculationMode>('normal')
+  const [calculationMode, setCalculationMode] = useState<CalculationMode>('pessimistic')
 
   const selectedSubject = subjects?.find(s => s.id === selectedSubjectId)
 
