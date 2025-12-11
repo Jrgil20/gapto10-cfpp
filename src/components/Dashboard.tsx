@@ -2,6 +2,7 @@ import { Subject, Config } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
 import { CheckCircle, WarningCircle, Target, Plus, XCircle, Check, X } from '@phosphor-icons/react'
 import { calculateRequiredNotes } from '../lib/calculations'
 
@@ -70,33 +71,63 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
 
           const canStillPass = calculation.currentPercentage + totalPendingWeight >= passingPoint
 
-          const getStatusIcon = () => {
+          const getStatusInfo = () => {
             if (evaluatedWeight === 0) {
-              return <WarningCircle className="text-muted-foreground" weight="fill" size={32} />
+              return {
+                icon: <WarningCircle className="text-muted-foreground" weight="fill" size={32} />,
+                status: 'Sin evaluaciones',
+                details: 'No hay evaluaciones completadas aún'
+              }
             }
 
             const evaluatedPercent = (calculation.currentPercentage / evaluatedWeight) * 100
+            const obtainedPercent = calculation.currentPercentage
+            const remainingWeight = totalPendingWeight
+            const neededFromRemaining = Math.max(0, passingPoint - calculation.currentPercentage)
+            const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
 
             if (calculation.currentPercentage >= passingPoint) {
-              if (evaluatedWeight >= 75) {
-                return <Check className="text-accent" weight="bold" size={32} />
-              } else {
-                return <Check className="text-orange" weight="bold" size={32} />
+              const statusIcon = evaluatedWeight >= 75
+                ? <Check className="text-accent" weight="bold" size={32} />
+                : <Check className="text-orange" weight="bold" size={32} />
+              
+              return {
+                icon: statusIcon,
+                status: 'Aprobado',
+                details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado (${evaluatedPercent.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight}% por evaluar.` : ''}`
               }
             }
 
             if (!canStillPass) {
-              return <X className="text-destructive" weight="bold" size={32} />
+              return {
+                icon: <X className="text-destructive" weight="bold" size={32} />,
+                status: 'Imposible aprobar',
+                details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado. No es posible alcanzar el ${passingPoint}% necesario con los ${remainingWeight}% restantes.`
+              }
             }
 
+            let statusText = ''
+            let statusIcon: React.ReactElement
+
             if (evaluatedPercent >= 70) {
-              return <WarningCircle className="text-accent" weight="fill" size={32} />
+              statusText = 'Rendimiento alto'
+              statusIcon = <WarningCircle className="text-accent" weight="fill" size={32} />
             } else if (evaluatedPercent >= 40) {
-              return <WarningCircle className="text-orange" weight="fill" size={32} />
+              statusText = 'Rendimiento moderado'
+              statusIcon = <WarningCircle className="text-orange" weight="fill" size={32} />
             } else {
-              return <WarningCircle className="text-destructive" weight="fill" size={32} />
+              statusText = 'Rendimiento bajo'
+              statusIcon = <WarningCircle className="text-destructive" weight="fill" size={32} />
+            }
+
+            return {
+              icon: statusIcon,
+              status: statusText,
+              details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado (${evaluatedPercent.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
             }
           }
+
+          const statusInfo = getStatusInfo()
 
           return (
             <Card 
@@ -122,7 +153,21 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                       {subject.evaluations.length} evaluaciones • {subject.evaluations.filter(e => e.obtainedPoints !== undefined).length} completadas
                     </p>
                   </div>
-                  {getStatusIcon()}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-help">
+                          {statusInfo.icon}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <div className="flex flex-col gap-1">
+                          <p className="font-semibold">{statusInfo.status}</p>
+                          <p className="text-xs">{statusInfo.details}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 <div className="flex flex-col gap-2">
