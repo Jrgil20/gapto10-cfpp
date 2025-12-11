@@ -2,7 +2,7 @@ import { Subject, Config } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { CheckCircle, WarningCircle, Target, Plus } from '@phosphor-icons/react'
+import { CheckCircle, WarningCircle, Target, Plus, XCircle, Check, X } from '@phosphor-icons/react'
 import { calculateRequiredNotes } from '../lib/calculations'
 
 interface DashboardProps {
@@ -64,6 +64,40 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             ? calculation.currentPracticePercentage >= practiceTarget
             : true
 
+          const totalPendingWeight = subject.evaluations
+            .filter(e => e.obtainedPoints === undefined)
+            .reduce((sum, e) => sum + e.weight, 0)
+
+          const canStillPass = calculation.currentPercentage + totalPendingWeight >= passingPoint
+
+          const getStatusIcon = () => {
+            if (evaluatedWeight === 0) {
+              return <WarningCircle className="text-muted-foreground" weight="fill" size={32} />
+            }
+
+            const evaluatedPercent = (calculation.currentPercentage / evaluatedWeight) * 100
+
+            if (calculation.currentPercentage >= passingPoint) {
+              if (evaluatedWeight >= 75) {
+                return <Check className="text-accent" weight="bold" size={32} />
+              } else {
+                return <Check className="text-orange" weight="bold" size={32} />
+              }
+            }
+
+            if (!canStillPass) {
+              return <X className="text-destructive" weight="bold" size={32} />
+            }
+
+            if (evaluatedPercent >= 70) {
+              return <WarningCircle className="text-accent" weight="fill" size={32} />
+            } else if (evaluatedPercent >= 40) {
+              return <WarningCircle className="text-orange" weight="fill" size={32} />
+            } else {
+              return <WarningCircle className="text-destructive" weight="fill" size={32} />
+            }
+          }
+
           return (
             <Card 
               key={subject.id} 
@@ -88,11 +122,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                       {subject.evaluations.length} evaluaciones • {subject.evaluations.filter(e => e.obtainedPoints !== undefined).length} completadas
                     </p>
                   </div>
-                  {isApproved ? (
-                    <CheckCircle className="text-accent" weight="fill" size={32} />
-                  ) : (
-                    <WarningCircle className="text-destructive" weight="fill" size={32} />
-                  )}
+                  {getStatusIcon()}
                 </div>
 
                 <div className="flex flex-col gap-2">
