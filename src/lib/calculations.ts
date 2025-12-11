@@ -96,13 +96,16 @@ function calculatePessimisticNote(
   const sortedByWeight = [...pendingEvaluations].sort((a, b) => b.weight - a.weight)
   const evalIndex = sortedByWeight.findIndex(e => e.id === evaluation.id)
   
-  const weightRatio = evaluation.weight / totalPendingWeight
-  const inverseWeightFactor = 1 - (evalIndex / pendingEvaluations.length) * 0.3
+  const inverseWeightFactor = 1 - (evalIndex / pendingEvaluations.length) * 0.4
   
-  const percentageForThisEval = (neededPercentage * weightRatio) * inverseWeightFactor
-  const requiredPercentage = percentageForThisEval / evaluation.weight
+  const adjustedNeeded = neededPercentage * inverseWeightFactor
+  const baseShare = adjustedNeeded / pendingEvaluations.length
   
-  return Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+  const percentageContribution = baseShare + (baseShare * (evaluation.weight / totalPendingWeight) * 0.5)
+  
+  const requiredPointsPercentage = percentageContribution / evaluation.weight
+  
+  return Math.min(evaluation.maxPoints, Math.max(0, requiredPointsPercentage * evaluation.maxPoints))
 }
 
 function calculateNormalNote(
