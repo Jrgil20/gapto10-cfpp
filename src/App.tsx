@@ -24,6 +24,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
   const [subjectDialogOpen, setSubjectDialogOpen] = useState(false)
   const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false)
+  const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | undefined>(undefined)
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('normal')
@@ -53,24 +54,52 @@ function App() {
   const handleSaveEvaluation = (evaluationData: Omit<Evaluation, 'id'>) => {
     if (!selectedSubjectId) return
 
-    setSubjects((current) =>
-      (current || []).map((subject) => {
-        if (subject.id === selectedSubjectId) {
-          return {
-            ...subject,
-            evaluations: [
-              ...subject.evaluations,
-              {
-                ...evaluationData,
-                id: Date.now().toString()
-              }
-            ]
+    if (editingEvaluation) {
+      setSubjects((current) =>
+        (current || []).map((subject) => {
+          if (subject.id === selectedSubjectId) {
+            return {
+              ...subject,
+              evaluations: subject.evaluations.map((eval_) =>
+                eval_.id === editingEvaluation.id
+                  ? {
+                      ...evaluationData,
+                      id: eval_.id
+                    }
+                  : eval_
+              )
+            }
           }
-        }
-        return subject
-      })
-    )
-    toast.success('Evaluación agregada')
+          return subject
+        })
+      )
+      toast.success('Evaluación actualizada')
+      setEditingEvaluation(undefined)
+    } else {
+      setSubjects((current) =>
+        (current || []).map((subject) => {
+          if (subject.id === selectedSubjectId) {
+            return {
+              ...subject,
+              evaluations: [
+                ...subject.evaluations,
+                {
+                  ...evaluationData,
+                  id: Date.now().toString()
+                }
+              ]
+            }
+          }
+          return subject
+        })
+      )
+      toast.success('Evaluación agregada')
+    }
+  }
+
+  const handleEditEvaluation = (evaluation: Evaluation) => {
+    setEditingEvaluation(evaluation)
+    setEvaluationDialogOpen(true)
   }
 
   const handleUpdateNote = (evaluationId: string, points: number | undefined) => {
@@ -247,7 +276,11 @@ function App() {
             subject={selectedSubject}
             calculation={calculation}
             config={config}
-            onAddEvaluation={() => setEvaluationDialogOpen(true)}
+            onAddEvaluation={() => {
+              setEditingEvaluation(undefined)
+              setEvaluationDialogOpen(true)
+            }}
+            onEditEvaluation={handleEditEvaluation}
             onUpdateNote={handleUpdateNote}
             calculationMode={calculationMode}
             onCalculationModeChange={setCalculationMode}
@@ -275,9 +308,15 @@ function App() {
       {selectedSubject && config && (
         <EvaluationDialog
           open={evaluationDialogOpen}
-          onOpenChange={setEvaluationDialogOpen}
+          onOpenChange={(open) => {
+            setEvaluationDialogOpen(open)
+            if (!open) {
+              setEditingEvaluation(undefined)
+            }
+          }}
           onSave={handleSaveEvaluation}
           subject={selectedSubject}
+          evaluation={editingEvaluation}
           defaultMaxPoints={config.defaultMaxPoints}
         />
       )}

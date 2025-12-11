@@ -1,4 +1,4 @@
-import { Subject, CalculationResult, CalculationMode, Config } from '../types'
+import { Subject, CalculationResult, CalculationMode, Config, Evaluation } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Input } from './ui/input'
@@ -6,7 +6,7 @@ import { Button } from './ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { Separator } from './ui/separator'
 import { Alert, AlertDescription } from './ui/alert'
-import { Plus, Calendar, Percent } from '@phosphor-icons/react'
+import { Plus, Calendar, Percent, PencilSimple } from '@phosphor-icons/react'
 import { validateWeights } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
@@ -16,6 +16,7 @@ interface SubjectViewProps {
   calculation: CalculationResult
   config: Config
   onAddEvaluation: () => void
+  onEditEvaluation: (evaluation: Evaluation) => void
   onUpdateNote: (evaluationId: string, points: number | undefined) => void
   calculationMode: CalculationMode
   onCalculationModeChange: (mode: CalculationMode) => void
@@ -26,6 +27,7 @@ export function SubjectView({
   calculation,
   config,
   onAddEvaluation,
+  onEditEvaluation,
   onUpdateNote,
   calculationMode,
   onCalculationModeChange
@@ -118,7 +120,17 @@ export function SubjectView({
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between">
                       <div className="flex flex-col gap-1">
-                        <h3 className="font-semibold">{evaluation.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{evaluation.name}</h3>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => onEditEvaluation(evaluation)}
+                          >
+                            <PencilSimple size={14} />
+                          </Button>
+                        </div>
                         <div className="flex gap-2 text-sm text-muted-foreground">
                           {evaluation.date && (
                             <div className="flex items-center gap-1">

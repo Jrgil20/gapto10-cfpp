@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -23,11 +23,29 @@ export function EvaluationDialog({
   evaluation,
   defaultMaxPoints
 }: EvaluationDialogProps) {
-  const [name, setName] = useState(evaluation?.name || '')
-  const [date, setDate] = useState(evaluation?.date || '')
-  const [weight, setWeight] = useState(evaluation?.weight?.toString() || '')
-  const [maxPoints, setMaxPoints] = useState(evaluation?.maxPoints?.toString() || defaultMaxPoints.toString())
-  const [section, setSection] = useState<'theory' | 'practice' | undefined>(evaluation?.section)
+  const [name, setName] = useState('')
+  const [date, setDate] = useState('')
+  const [weight, setWeight] = useState('')
+  const [maxPoints, setMaxPoints] = useState(defaultMaxPoints.toString())
+  const [section, setSection] = useState<'theory' | 'practice' | undefined>(undefined)
+
+  useEffect(() => {
+    if (open) {
+      if (evaluation) {
+        setName(evaluation.name)
+        setDate(evaluation.date)
+        setWeight(evaluation.weight.toString())
+        setMaxPoints(evaluation.maxPoints.toString())
+        setSection(evaluation.section)
+      } else {
+        setName('')
+        setDate('')
+        setWeight('')
+        setMaxPoints(defaultMaxPoints.toString())
+        setSection(undefined)
+      }
+    }
+  }, [open, evaluation, defaultMaxPoints])
 
   const handleSave = () => {
     if (!name.trim() || !weight || !maxPoints) return
@@ -46,11 +64,6 @@ export function EvaluationDialog({
       section: subject.hasSplit ? section : undefined
     })
 
-    setName('')
-    setDate('')
-    setWeight('')
-    setMaxPoints(defaultMaxPoints.toString())
-    setSection(undefined)
     onOpenChange(false)
   }
 
