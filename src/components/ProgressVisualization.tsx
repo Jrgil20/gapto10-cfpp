@@ -1,7 +1,7 @@
-import { createElement } from 'react'
 import { Subject, Config } from '../types'
 import { Card } from './ui/card'
-import { CheckCircle, WarningCircle, Target, X, Question } from '@phosphor-icons/react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
+import { CheckCircle, WarningCircle, Target, X, Check } from '@phosphor-icons/react'
 
 interface ProgressVisualizationProps {
   subject: Subject
@@ -14,65 +14,63 @@ interface ProgressVisualizationProps {
   evaluatedPracticeWeight?: number
 }
 
-function getStatusIcon(
+function getStatusInfo(
   currentPercentage: number,
   evaluatedWeight: number,
   percentageOfEvaluated: number,
   passingPoint: number,
-  canStillPass: boolean
+  canStillPass: boolean,
+  remainingWeight: number
 ) {
   if (evaluatedWeight === 0) {
     return {
-      icon: Question,
-      color: 'text-muted-foreground',
-      label: 'Sin evaluaciones'
+      icon: <WarningCircle className="text-muted-foreground" weight="fill" size={32} />,
+      status: 'Sin evaluaciones',
+      details: 'No hay evaluaciones completadas aún'
+    }
+  }
+
+  const neededFromRemaining = Math.max(0, passingPoint - currentPercentage)
+  const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
+
+  if (currentPercentage >= passingPoint) {
+    const statusIcon = evaluatedWeight >= 75
+      ? <Check className="text-accent" weight="bold" size={32} />
+      : <Check className="text-orange" weight="bold" size={32} />
+    
+    return {
+      icon: statusIcon,
+      status: 'Aprobado',
+      details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight}% por evaluar.` : ''}`
     }
   }
 
   if (!canStillPass) {
     return {
-      icon: X,
-      color: 'text-destructive',
-      label: 'Insuficiente para aprobar'
+      icon: <X className="text-destructive" weight="bold" size={32} />,
+      status: 'Imposible aprobar',
+      details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado. No es posible alcanzar el ${passingPoint}% necesario con los ${remainingWeight}% restantes.`
     }
   }
 
-  if (currentPercentage >= passingPoint) {
-    if (percentageOfEvaluated >= 75) {
-      return {
-        icon: CheckCircle,
-        color: 'text-accent',
-        label: 'Aprobado con buen rendimiento'
-      }
-    } else {
-      return {
-        icon: CheckCircle,
-        color: 'text-orange',
-        label: 'Aprobado (rendimiento moderado)'
-      }
-    }
-  }
+  let statusText = ''
+  let statusIcon: React.ReactElement
 
-  if (percentageOfEvaluated < 40) {
-    return {
-      icon: WarningCircle,
-      color: 'text-destructive',
-      label: 'Rendimiento bajo'
-    }
-  }
-
-  if (percentageOfEvaluated >= 40 && percentageOfEvaluated < 70) {
-    return {
-      icon: WarningCircle,
-      color: 'text-orange',
-      label: 'Rendimiento moderado'
-    }
+  if (percentageOfEvaluated >= 70) {
+    statusText = 'Rendimiento alto'
+    statusIcon = <WarningCircle className="text-accent" weight="fill" size={32} />
+  } else if (percentageOfEvaluated >= 40) {
+    statusText = 'Rendimiento moderado'
+    statusIcon = <WarningCircle className="text-orange" weight="fill" size={32} />
+  } else {
+    statusText = 'Rendimiento bajo'
+    statusIcon = <WarningCircle className="text-destructive" weight="fill" size={32} />
   }
 
   return {
-    icon: CheckCircle,
-    color: 'text-accent',
-    label: 'Buen rendimiento'
+    icon: statusIcon,
+    status: statusText,
+    details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
   }
 }
 
@@ -111,12 +109,13 @@ export function ProgressVisualization({
   const maxPossiblePercentage = currentPercentage + remainingWeight
   const canStillPass = maxPossiblePercentage >= passingPoint
 
-  const { icon, color, label } = getStatusIcon(
+  const statusInfo = getStatusInfo(
     currentPercentage, 
     evaluatedWeight, 
     percentageOfEvaluated, 
     passingPoint, 
-    canStillPass
+    canStillPass,
+    remainingWeight
   )
 
   return (
@@ -136,16 +135,21 @@ export function ProgressVisualization({
                 {currentPercentage.toFixed(2)}%
               </span>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              {createElement(icon, { 
-                className: color, 
-                weight: "fill", 
-                size: 32 
-              })}
-              <span className={`text-xs font-medium ${color}`}>
-                {label}
-              </span>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help">
+                    {statusInfo.icon}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-semibold">{statusInfo.status}</p>
+                    <p className="text-xs">{statusInfo.details}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
