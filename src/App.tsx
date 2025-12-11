@@ -165,6 +165,23 @@ function App() {
     )
   }
 
+  const handleDeleteEvaluation = (evaluationId: string) => {
+    if (!selectedSubjectId) return
+
+    setSubjects((currentSubjects) =>
+      (currentSubjects || []).map((subject) => {
+        if (subject.id === selectedSubjectId) {
+          return {
+            ...subject,
+            evaluations: subject.evaluations.filter((eval_) => eval_.id !== evaluationId)
+          }
+        }
+        return subject
+      })
+    )
+    toast.success('Evaluación eliminada')
+  }
+
   const handleExport = () => {
     const data = {
       subjects: subjectsData,
@@ -364,6 +381,7 @@ function App() {
               setEvaluationDialogOpen(true)
             }}
             onEditEvaluation={handleEditEvaluation}
+            onDeleteEvaluation={handleDeleteEvaluation}
             onUpdateNote={handleUpdateNote}
             calculationMode={calculationMode}
             onCalculationModeChange={setCalculationMode}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Subject, CalculationResult, CalculationMode, Config, Evaluation } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
@@ -6,7 +7,17 @@ import { Button } from './ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { Separator } from './ui/separator'
 import { Alert, AlertDescription } from './ui/alert'
-import { Plus, Calendar, Percent, PencilSimple } from '@phosphor-icons/react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog'
+import { Plus, Calendar, Percent, PencilSimple, Trash } from '@phosphor-icons/react'
 import { validateWeights } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
@@ -17,6 +28,7 @@ interface SubjectViewProps {
   config: Config
   onAddEvaluation: () => void
   onEditEvaluation: (evaluation: Evaluation) => void
+  onDeleteEvaluation: (evaluationId: string) => void
   onUpdateNote: (evaluationId: string, points: number | undefined) => void
   calculationMode: CalculationMode
   onCalculationModeChange: (mode: CalculationMode) => void
@@ -28,10 +40,14 @@ export function SubjectView({
   config,
   onAddEvaluation,
   onEditEvaluation,
+  onDeleteEvaluation,
   onUpdateNote,
   calculationMode,
   onCalculationModeChange
 }: SubjectViewProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [evaluationToDelete, setEvaluationToDelete] = useState<Evaluation | null>(null)
+  
   const validation = validateWeights(subject)
   
   const getRequiredNote = (evalId: string) => {
@@ -59,6 +75,19 @@ export function SubjectView({
   const hasCompletedEvaluations = subject.evaluations.some(
     e => e.obtainedPoints !== undefined && e.date
   )
+
+  const handleDeleteClick = (evaluation: Evaluation) => {
+    setEvaluationToDelete(evaluation)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (evaluationToDelete) {
+      onDeleteEvaluation(evaluationToDelete.id)
+      setDeleteDialogOpen(false)
+      setEvaluationToDelete(null)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -122,14 +151,24 @@ export function SubjectView({
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{evaluation.name}</h3>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => onEditEvaluation(evaluation)}
-                          >
-                            <PencilSimple size={14} />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => onEditEvaluation(evaluation)}
+                            >
+                              <PencilSimple size={14} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteClick(evaluation)}
+                            >
+                              <Trash size={14} />
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex gap-2 text-sm text-muted-foreground">
                           {evaluation.date && (
@@ -215,6 +254,25 @@ export function SubjectView({
           </Button>
         </Card>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar evaluación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la evaluación
+              {evaluationToDelete && <strong className="block mt-1">&quot;{evaluationToDelete.name}&quot;</strong>}
+              de esta materia.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
