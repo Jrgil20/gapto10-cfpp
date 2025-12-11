@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Subject, Evaluation, Config, CalculationMode } from './types'
 import { SubjectDialog } from './components/SubjectDialog'
 import { EvaluationDialog } from './components/EvaluationDialog'
@@ -15,8 +14,8 @@ import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft } from '
 import { calculateRequiredNotes } from './lib/calculations'
 
 function App() {
-  const [subjects, setSubjects] = useKV<Subject[]>('subjects', [])
-  const [config, setConfig] = useKV<Config>('config', {
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [config, setConfig] = useState<Config>({
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
     passingPercentage: 50
@@ -34,8 +33,8 @@ function App() {
   const selectedSubject = subjects?.find(s => s.id === selectedSubjectId)
 
   const handleSaveSubject = (subjectData: Omit<Subject, 'id' | 'evaluations'>) => {
-    setSubjects((current) => [
-      ...(current || []),
+    setSubjects([
+      ...subjects,
       {
         ...subjectData,
         id: Date.now().toString(),
@@ -46,7 +45,7 @@ function App() {
   }
 
   const handleDeleteSubject = (subjectId: string) => {
-    setSubjects((current) => (current || []).filter(s => s.id !== subjectId))
+    setSubjects(subjects.filter(s => s.id !== subjectId))
     if (selectedSubjectId === subjectId) {
       setSelectedSubjectId(null)
       setView('dashboard')
@@ -69,8 +68,8 @@ function App() {
     if (!selectedSubjectId) return
 
     if (editingEvaluation) {
-      setSubjects((current) =>
-        (current || []).map((subject) => {
+      setSubjects(
+        subjects.map((subject) => {
           if (subject.id === selectedSubjectId) {
             return {
               ...subject,
@@ -90,8 +89,8 @@ function App() {
       toast.success('Evaluación actualizada')
       setEditingEvaluation(undefined)
     } else {
-      setSubjects((current) =>
-        (current || []).map((subject) => {
+      setSubjects(
+        subjects.map((subject) => {
           if (subject.id === selectedSubjectId) {
             return {
               ...subject,
@@ -114,8 +113,8 @@ function App() {
   const handleSaveMultipleEvaluations = (evaluations: Omit<Evaluation, 'id'>[]) => {
     if (!selectedSubjectId) return
 
-    setSubjects((current) =>
-      (current || []).map((subject) => {
+    setSubjects(
+      subjects.map((subject) => {
         if (subject.id === selectedSubjectId) {
           const newEvaluations = evaluations.map((evalData, index) => ({
             ...evalData,
@@ -141,8 +140,8 @@ function App() {
   const handleUpdateNote = (evaluationId: string, points: number | undefined) => {
     if (!selectedSubjectId) return
 
-    setSubjects((current) =>
-      (current || []).map((subject) => {
+    setSubjects(
+      subjects.map((subject) => {
         if (subject.id === selectedSubjectId) {
           return {
             ...subject,
@@ -160,8 +159,8 @@ function App() {
 
   const handleExport = () => {
     const data = {
-      subjects: subjects || [],
-      config: config || { defaultMaxPoints: 20, percentagePerPoint: 5, passingPercentage: 50 },
+      subjects: subjects,
+      config: config,
       exportDate: new Date().toISOString()
     }
 
@@ -239,7 +238,7 @@ function App() {
                   <Separator />
 
                   <div className="flex flex-col gap-2">
-                    {(subjects || []).map((subject) => (
+                    {subjects.map((subject) => (
                       <Card
                         key={subject.id}
                         className={`p-3 cursor-pointer transition-all hover:shadow-md ${
@@ -271,7 +270,7 @@ function App() {
                       </Card>
                     ))}
 
-                    {(!subjects || subjects.length === 0) && (
+                    {subjects.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-8">
                         No hay materias registradas
                       </p>
@@ -344,8 +343,8 @@ function App() {
       <main className="container mx-auto px-4 py-6">
         {view === 'dashboard' ? (
           <Dashboard
-            subjects={subjects || []}
-            config={config || { defaultMaxPoints: 20, percentagePerPoint: 5, passingPercentage: 50 }}
+            subjects={subjects}
+            config={config}
             onSelectSubject={handleSelectSubject}
             onAddSubject={() => setSubjectDialogOpen(true)}
           />
