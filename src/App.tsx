@@ -306,9 +306,20 @@ function App() {
               </Button>
             )}
 
-            <h1 className="text-xl font-bold">
-              {view === 'subject' && selectedSubject ? selectedSubject.name : 'Gestor de Notas Académicas'}
-            </h1>
+            {view === 'subject' && selectedSubject ? (
+              <h1 className="text-xl font-bold">{selectedSubject.name}</h1>
+            ) : (
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold leading-tight">
+                  <span className="text-foreground">Gap</span>
+                  <span className="text-accent">T</span>
+                  <span className="text-foreground">o</span>
+                  <span className="text-accent">10</span>
+                  <span className="text-muted-foreground text-base ml-2">- Cuánto Falta Para Pasar</span>
+                </h1>
+                <p className="text-xs text-muted-foreground">Gestor de Notas Académicas</p>
+              </div>
+            )}
           </div>
 
           <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
