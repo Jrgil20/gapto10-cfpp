@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from './ui/alert'
 import { Plus, Calendar, Percent } from '@phosphor-icons/react'
 import { validateWeights } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
+import { HistoricalChart } from './HistoricalChart'
 
 interface SubjectViewProps {
   subject: Subject
@@ -53,6 +54,10 @@ export function SubjectView({
     .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
     .reduce((sum, e) => sum + e.weight, 0)
 
+  const hasCompletedEvaluations = subject.evaluations.some(
+    e => e.obtainedPoints !== undefined && e.date
+  )
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
@@ -92,6 +97,10 @@ export function SubjectView({
           evaluatedTheoryWeight={evaluatedTheoryWeight}
           evaluatedPracticeWeight={evaluatedPracticeWeight}
         />
+
+        {hasCompletedEvaluations && (
+          <HistoricalChart subject={subject} config={config} />
+        )}
       </div>
 
       {subject.evaluations.length > 0 && (
