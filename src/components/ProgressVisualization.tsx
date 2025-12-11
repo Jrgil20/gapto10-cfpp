@@ -238,6 +238,53 @@ function ProgressBar({
   const evaluatedPercent = (evaluated / target) * 100
   const passingPercent = (passingPoint / target) * 100
 
+  const percentageOfEvaluated = evaluated > 0 ? (current / evaluated) * 100 : 0
+  const remainingWeight = target - evaluated
+  const maxPossiblePercentage = current + remainingWeight
+  const canStillPass = maxPossiblePercentage >= passingPoint
+  const neededFromRemaining = Math.max(0, passingPoint - current)
+  const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
+
+  const getStatusInfo = () => {
+    if (evaluated === 0) {
+      return {
+        status: 'Sin evaluaciones',
+        details: `No hay evaluaciones de ${label.toLowerCase()} completadas aún`
+      }
+    }
+
+    if (current >= passingPoint) {
+      const statusText = evaluated >= (target * 0.75) ? 'Aprobado (alto rendimiento)' : 'Aprobado'
+      return {
+        status: statusText,
+        details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight.toFixed(1)}% por evaluar.` : ''}`
+      }
+    }
+
+    if (!canStillPass) {
+      return {
+        status: 'Imposible aprobar',
+        details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado. No es posible alcanzar el ${passingPoint.toFixed(1)}% necesario con los ${remainingWeight.toFixed(1)}% restantes.`
+      }
+    }
+
+    let statusText = ''
+    if (percentageOfEvaluated >= 70) {
+      statusText = 'Rendimiento alto'
+    } else if (percentageOfEvaluated >= 40) {
+      statusText = 'Rendimiento moderado'
+    } else {
+      statusText = 'Rendimiento bajo'
+    }
+
+    return {
+      status: statusText,
+      details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight.toFixed(1)}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
+    }
+  }
+
+  const statusInfo = getStatusInfo()
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -248,7 +295,28 @@ function ProgressBar({
           <span className="font-data text-sm">
             {current.toFixed(1)}%
           </span>
-          {isApproved !== undefined && (
+          {isApproved !== undefined && !isTotal && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help">
+                    {isApproved ? (
+                      <CheckCircle size={16} className="text-accent" weight="fill" />
+                    ) : (
+                      <WarningCircle size={16} className="text-destructive" weight="fill" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-semibold">{statusInfo.status}</p>
+                    <p className="text-xs">{statusInfo.details}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {isApproved !== undefined && isTotal && (
             isApproved ? (
               <CheckCircle size={16} className="text-accent" weight="fill" />
             ) : (
