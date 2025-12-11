@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { Subject, Evaluation, Config, CalculationMode } from './types'
 import { SubjectDialog } from './components/SubjectDialog'
 import { EvaluationDialog } from './components/EvaluationDialog'
@@ -14,8 +15,8 @@ import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft } from '
 import { calculateRequiredNotes } from './lib/calculations'
 
 function App() {
-  const [subjects, setSubjects] = useState<Subject[]>([])
-  const [config, setConfig] = useState<Config>({
+  const [subjects, setSubjects] = useKV<Subject[]>('gapto10-subjects', [])
+  const [config, setConfig] = useKV<Config>('gapto10-config', {
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
     passingPercentage: 50
@@ -30,11 +31,18 @@ function App() {
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('pessimistic')
   const [view, setView] = useState<'dashboard' | 'subject'>('dashboard')
 
-  const selectedSubject = subjects?.find(s => s.id === selectedSubjectId)
+  const subjectsData = subjects || []
+  const configData = config || {
+    defaultMaxPoints: 20,
+    percentagePerPoint: 5,
+    passingPercentage: 50
+  }
+
+  const selectedSubject = subjectsData.find(s => s.id === selectedSubjectId)
 
   const handleSaveSubject = (subjectData: Omit<Subject, 'id' | 'evaluations'>) => {
-    setSubjects([
-      ...subjects,
+    setSubjects((currentSubjects) => [
+      ...(currentSubjects || []),
       {
         ...subjectData,
         id: Date.now().toString(),
@@ -45,7 +53,7 @@ function App() {
   }
 
   const handleDeleteSubject = (subjectId: string) => {
-    setSubjects(subjects.filter(s => s.id !== subjectId))
+    setSubjects((currentSubjects) => (currentSubjects || []).filter(s => s.id !== subjectId))
     if (selectedSubjectId === subjectId) {
       setSelectedSubjectId(null)
       setView('dashboard')
@@ -68,8 +76,8 @@ function App() {
     if (!selectedSubjectId) return
 
     if (editingEvaluation) {
-      setSubjects(
-        subjects.map((subject) => {
+      setSubjects((currentSubjects) =>
+        (currentSubjects || []).map((subject) => {
           if (subject.id === selectedSubjectId) {
             return {
               ...subject,
@@ -89,8 +97,8 @@ function App() {
       toast.success('Evaluación actualizada')
       setEditingEvaluation(undefined)
     } else {
-      setSubjects(
-        subjects.map((subject) => {
+      setSubjects((currentSubjects) =>
+        (currentSubjects || []).map((subject) => {
           if (subject.id === selectedSubjectId) {
             return {
               ...subject,
@@ -113,8 +121,8 @@ function App() {
   const handleSaveMultipleEvaluations = (evaluations: Omit<Evaluation, 'id'>[]) => {
     if (!selectedSubjectId) return
 
-    setSubjects(
-      subjects.map((subject) => {
+    setSubjects((currentSubjects) =>
+      (currentSubjects || []).map((subject) => {
         if (subject.id === selectedSubjectId) {
           const newEvaluations = evaluations.map((evalData, index) => ({
             ...evalData,
@@ -140,8 +148,8 @@ function App() {
   const handleUpdateNote = (evaluationId: string, points: number | undefined) => {
     if (!selectedSubjectId) return
 
-    setSubjects(
-      subjects.map((subject) => {
+    setSubjects((currentSubjects) =>
+      (currentSubjects || []).map((subject) => {
         if (subject.id === selectedSubjectId) {
           return {
             ...subject,
@@ -159,8 +167,8 @@ function App() {
 
   const handleExport = () => {
     const data = {
-      subjects: subjects,
-      config: config,
+      subjects: subjectsData,
+      config: configData,
       exportDate: new Date().toISOString()
     }
 
@@ -209,8 +217,8 @@ function App() {
     input.click()
   }
 
-  const calculation = selectedSubject && config
-    ? calculateRequiredNotes(selectedSubject, config)
+  const calculation = selectedSubject && configData
+    ? calculateRequiredNotes(selectedSubject, configData)
     : null
 
   return (
@@ -238,7 +246,7 @@ function App() {
                   <Separator />
 
                   <div className="flex flex-col gap-2">
-                    {subjects.map((subject) => (
+                    {subjectsData.map((subject) => (
                       <Card
                         key={subject.id}
                         className={`p-3 cursor-pointer transition-all hover:shadow-md ${
@@ -270,7 +278,7 @@ function App() {
                       </Card>
                     ))}
 
-                    {subjects.length === 0 && (
+                    {subjectsData.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-8">
                         No hay materias registradas
                       </p>
@@ -343,16 +351,16 @@ function App() {
       <main className="container mx-auto px-4 py-6">
         {view === 'dashboard' ? (
           <Dashboard
-            subjects={subjects}
-            config={config}
+            subjects={subjectsData}
+            config={configData}
             onSelectSubject={handleSelectSubject}
             onAddSubject={() => setSubjectDialogOpen(true)}
           />
-        ) : selectedSubject && calculation && config ? (
+        ) : selectedSubject && calculation && configData ? (
           <SubjectView
             subject={selectedSubject}
             calculation={calculation}
-            config={config}
+            config={configData}
             onAddEvaluation={() => {
               setEditingEvaluation(undefined)
               setEvaluationDialogOpen(true)
@@ -371,7 +379,7 @@ function App() {
         onSave={handleSaveSubject}
       />
 
-      {selectedSubject && config && (
+      {selectedSubject && configData && (
         <EvaluationDialog
           open={evaluationDialogOpen}
           onOpenChange={(open) => {
@@ -384,16 +392,16 @@ function App() {
           onSaveMultiple={handleSaveMultipleEvaluations}
           subject={selectedSubject}
           evaluation={editingEvaluation}
-          defaultMaxPoints={config.defaultMaxPoints}
+          defaultMaxPoints={configData.defaultMaxPoints}
         />
       )}
 
-      {config && (
+      {configData && (
         <ConfigDialog
           open={configDialogOpen}
           onOpenChange={setConfigDialogOpen}
-          config={config}
-          onSave={setConfig}
+          config={configData}
+          onSave={(newConfig) => setConfig(newConfig)}
         />
       )}
     </div>
