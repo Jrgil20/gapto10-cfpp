@@ -311,13 +311,26 @@ function App() {
             ) : (
               <div className="flex flex-col">
                 <h1 className="text-xl font-bold leading-tight">
-                  <span className="text-foreground">Gap</span>
-                  <span className="text-accent">T</span>
-                  <span className="text-foreground">o</span>
-                  <span className="text-accent">10</span>
-                  <span className="text-muted-foreground text-base ml-2">- Cuánto Falta Para Pasar</span>
+                  {['G', 'a', 'p', 'T', 'o', '1', '0'].map((char, i) => (
+                    <span key={i} className={/[A-Z0-9]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
+                      {char}
+                    </span>
+                  ))}
+                  <span className="text-base ml-2">
+                    {' - Cuánto Falta Para Pasar'.split('').map((char, i) => (
+                      <span key={i} className={/[A-ZÁÉÍÓÚÑ]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
+                        {char}
+                      </span>
+                    ))}
+                  </span>
                 </h1>
-                <p className="text-xs text-muted-foreground">Gestor de Notas Académicas</p>
+                <p className="text-xs">
+                  {'Gestor de Notas Académicas'.split('').map((char, i) => (
+                    <span key={i} className={/[A-ZÁÉÍÓÚÑ]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
+                      {char}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
           </div>
