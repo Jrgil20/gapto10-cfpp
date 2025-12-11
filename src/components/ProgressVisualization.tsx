@@ -248,6 +248,7 @@ function ProgressBar({
   const getStatusInfo = () => {
     if (evaluated === 0) {
       return {
+        icon: <WarningCircle size={16} className="text-muted-foreground" weight="fill" />,
         status: 'Sin evaluaciones',
         details: `No hay evaluaciones de ${label.toLowerCase()} completadas aún`
       }
@@ -255,7 +256,11 @@ function ProgressBar({
 
     if (current >= passingPoint) {
       const statusText = evaluated >= (target * 0.75) ? 'Aprobado (alto rendimiento)' : 'Aprobado'
+      const statusIcon = evaluated >= (target * 0.75)
+        ? <Check size={16} className="text-accent" weight="bold" />
+        : <Check size={16} className="text-orange" weight="bold" />
       return {
+        icon: statusIcon,
         status: statusText,
         details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight.toFixed(1)}% por evaluar.` : ''}`
       }
@@ -263,21 +268,27 @@ function ProgressBar({
 
     if (!canStillPass) {
       return {
+        icon: <X size={16} className="text-destructive" weight="bold" />,
         status: 'Imposible aprobar',
         details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado. No es posible alcanzar el ${passingPoint.toFixed(1)}% necesario con los ${remainingWeight.toFixed(1)}% restantes.`
       }
     }
 
     let statusText = ''
+    let statusIcon: React.ReactElement
     if (percentageOfEvaluated >= 70) {
       statusText = 'Rendimiento alto'
+      statusIcon = <WarningCircle size={16} className="text-accent" weight="fill" />
     } else if (percentageOfEvaluated >= 40) {
       statusText = 'Rendimiento moderado'
+      statusIcon = <WarningCircle size={16} className="text-orange" weight="fill" />
     } else {
       statusText = 'Rendimiento bajo'
+      statusIcon = <WarningCircle size={16} className="text-destructive" weight="fill" />
     }
 
     return {
+      icon: statusIcon,
       status: statusText,
       details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight.toFixed(1)}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
     }
@@ -295,16 +306,12 @@ function ProgressBar({
           <span className="font-data text-sm">
             {current.toFixed(1)}%
           </span>
-          {isApproved !== undefined && !isTotal && (
+          {!isTotal && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="cursor-help">
-                    {isApproved ? (
-                      <CheckCircle size={16} className="text-accent" weight="fill" />
-                    ) : (
-                      <WarningCircle size={16} className="text-destructive" weight="fill" />
-                    )}
+                    {statusInfo.icon}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
@@ -316,7 +323,7 @@ function ProgressBar({
               </Tooltip>
             </TooltipProvider>
           )}
-          {isApproved !== undefined && isTotal && (
+          {isTotal && (
             isApproved ? (
               <CheckCircle size={16} className="text-accent" weight="fill" />
             ) : (
