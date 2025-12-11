@@ -312,7 +312,7 @@ function App() {
               <div className="flex flex-col">
                 <h1 className="text-xl font-bold leading-tight">
                   {['G', 'a', 'p', 'T', 'o', '1', '0'].map((char, i) => (
-                    <span key={i} className={/[A-Z0-9]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
+                    <span key={i} className="text-foreground">
                       {char}
                     </span>
                   ))}
