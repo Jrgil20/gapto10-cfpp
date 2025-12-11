@@ -301,15 +301,13 @@ function App() {
               </SheetContent>
             </Sheet>
 
-            {view === 'subject' && selectedSubject && (
+            {view === 'subject' && selectedSubject ? (
               <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
-                <ArrowLeft size={20} />
+                <ArrowLeft size={20} className="text-primary" />
               </Button>
-            )}
-
-            {view === 'dashboard' && (
+            ) : (
               <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
-                <House size={20} weight="fill" />
+                <House size={20} weight="fill" className="text-accent" />
               </Button>
             )}
 
