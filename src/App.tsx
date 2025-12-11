@@ -5,12 +5,13 @@ import { SubjectDialog } from './components/SubjectDialog'
 import { EvaluationDialog } from './components/EvaluationDialog'
 import { SubjectView } from './components/SubjectView'
 import { ConfigDialog } from './components/ConfigDialog'
+import { Dashboard } from './components/Dashboard'
 import { Button } from './components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet'
 import { Card } from './components/ui/card'
 import { Separator } from './components/ui/separator'
 import { toast } from 'sonner'
-import { List, Plus, GearSix, Download, Upload, Trash } from '@phosphor-icons/react'
+import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft } from '@phosphor-icons/react'
 import { calculateRequiredNotes } from './lib/calculations'
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('pessimistic')
+  const [view, setView] = useState<'dashboard' | 'subject'>('dashboard')
 
   const selectedSubject = subjects?.find(s => s.id === selectedSubjectId)
 
@@ -47,8 +49,20 @@ function App() {
     setSubjects((current) => (current || []).filter(s => s.id !== subjectId))
     if (selectedSubjectId === subjectId) {
       setSelectedSubjectId(null)
+      setView('dashboard')
     }
     toast.success('Materia eliminada')
+  }
+
+  const handleSelectSubject = (subjectId: string) => {
+    setSelectedSubjectId(subjectId)
+    setView('subject')
+    setSheetOpen(false)
+  }
+
+  const handleBackToDashboard = () => {
+    setSelectedSubjectId(null)
+    setView('dashboard')
   }
 
   const handleSaveEvaluation = (evaluationData: Omit<Evaluation, 'id'>) => {
@@ -233,10 +247,7 @@ function App() {
                             ? 'border-primary bg-primary/5'
                             : ''
                         }`}
-                        onClick={() => {
-                          setSelectedSubjectId(subject.id)
-                          setSheetOpen(false)
-                        }}
+                        onClick={() => handleSelectSubject(subject.id)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex flex-col gap-1 flex-1">
@@ -283,7 +294,21 @@ function App() {
               </SheetContent>
             </Sheet>
 
-            <h1 className="text-xl font-bold">Gestor de Notas Académicas</h1>
+            {view === 'subject' && selectedSubject && (
+              <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
+                <ArrowLeft size={20} />
+              </Button>
+            )}
+
+            {view === 'dashboard' && (
+              <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
+                <House size={20} weight="fill" />
+              </Button>
+            )}
+
+            <h1 className="text-xl font-bold">
+              {view === 'subject' && selectedSubject ? selectedSubject.name : 'Gestor de Notas Académicas'}
+            </h1>
           </div>
 
           <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
@@ -293,7 +318,14 @@ function App() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        {selectedSubject && calculation && config ? (
+        {view === 'dashboard' ? (
+          <Dashboard
+            subjects={subjects || []}
+            config={config || { defaultMaxPoints: 20, percentagePerPoint: 5, passingPercentage: 50 }}
+            onSelectSubject={handleSelectSubject}
+            onAddSubject={() => setSubjectDialogOpen(true)}
+          />
+        ) : selectedSubject && calculation && config ? (
           <SubjectView
             subject={selectedSubject}
             calculation={calculation}
@@ -307,18 +339,7 @@ function App() {
             calculationMode={calculationMode}
             onCalculationModeChange={setCalculationMode}
           />
-        ) : (
-          <Card className="p-12 flex flex-col items-center justify-center gap-4 text-center">
-            <h2 className="text-2xl font-semibold">Bienvenido</h2>
-            <p className="text-muted-foreground max-w-md">
-              Comienza creando una materia para gestionar tus evaluaciones y calcular las notas necesarias para aprobar.
-            </p>
-            <Button onClick={() => setSubjectDialogOpen(true)} size="lg">
-              <Plus className="mr-2" />
-              Crear Primera Materia
-            </Button>
-          </Card>
-        )}
+        ) : null}
       </main>
 
       <SubjectDialog
