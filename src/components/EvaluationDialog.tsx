@@ -69,14 +69,26 @@ export function EvaluationDialog({
     if (isMultiple && !evaluation) {
       const count = parseInt(multipleCount) || 2
       const defaultDate = date || new Date().toISOString().split('T')[0]
-      setMultipleEvals(
-        Array.from({ length: count }, (_, i) => ({
-          weight: sameWeight ? weight : (i < multipleEvals.length ? multipleEvals[i]?.weight || '' : ''),
-          date: i < multipleEvals.length ? multipleEvals[i]?.date || defaultDate : defaultDate
-        }))
+      setMultipleEvals((current) => {
+        const newEvals = Array.from({ length: count }, (_, i) => {
+          const existingEval = current[i]
+          return {
+            weight: existingEval?.weight || weight || '',
+            date: existingEval?.date || defaultDate
+          }
+        })
+        return newEvals
+      })
+    }
+  }, [isMultiple, multipleCount, date, evaluation])
+
+  useEffect(() => {
+    if (isMultiple && sameWeight && !evaluation && weight) {
+      setMultipleEvals((current) =>
+        current.map((eval_) => ({ ...eval_, weight }))
       )
     }
-  }, [isMultiple, multipleCount, sameWeight, weight, date, evaluation])
+  }, [weight, sameWeight, isMultiple, evaluation])
 
   const updateMultipleEval = (index: number, field: 'weight' | 'date', value: string) => {
     setMultipleEvals((current) =>
