@@ -11,6 +11,7 @@ interface EvaluationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (evaluation: Omit<Evaluation, 'id'>) => void
+  onSaveMultiple?: (evaluations: Omit<Evaluation, 'id'>[]) => void
   subject: Subject
   evaluation?: Evaluation
   defaultMaxPoints: number
@@ -25,6 +26,7 @@ export function EvaluationDialog({
   open,
   onOpenChange,
   onSave,
+  onSaveMultiple,
   subject,
   evaluation,
   defaultMaxPoints
@@ -104,6 +106,7 @@ export function EvaluationDialog({
 
     if (isMultiple && !evaluation) {
       const count = parseInt(multipleCount) || 2
+      const evaluationsToCreate: Omit<Evaluation, 'id'>[] = []
       
       for (let i = 0; i < count; i++) {
         const evalWeight = sameWeight ? weight : multipleEvals[i]?.weight
@@ -114,13 +117,17 @@ export function EvaluationDialog({
         const weightNum = parseFloat(evalWeight)
         if (weightNum <= 0) continue
 
-        onSave({
+        evaluationsToCreate.push({
           name: `${name.trim()} ${i + 1}`,
           date: evalDate,
           weight: weightNum,
           maxPoints: maxPointsNum,
           section: subject.hasSplit ? section : undefined
         })
+      }
+
+      if (onSaveMultiple && evaluationsToCreate.length > 0) {
+        onSaveMultiple(evaluationsToCreate)
       }
     } else {
       if (!weight) return

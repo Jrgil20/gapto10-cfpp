@@ -97,6 +97,28 @@ function App() {
     }
   }
 
+  const handleSaveMultipleEvaluations = (evaluations: Omit<Evaluation, 'id'>[]) => {
+    if (!selectedSubjectId) return
+
+    setSubjects((current) =>
+      (current || []).map((subject) => {
+        if (subject.id === selectedSubjectId) {
+          const newEvaluations = evaluations.map((evalData, index) => ({
+            ...evalData,
+            id: `${Date.now()}-${index}`
+          }))
+          
+          return {
+            ...subject,
+            evaluations: [...subject.evaluations, ...newEvaluations]
+          }
+        }
+        return subject
+      })
+    )
+    toast.success(`${evaluations.length} evaluaciones agregadas`)
+  }
+
   const handleEditEvaluation = (evaluation: Evaluation) => {
     setEditingEvaluation(evaluation)
     setEvaluationDialogOpen(true)
@@ -315,6 +337,7 @@ function App() {
             }
           }}
           onSave={handleSaveEvaluation}
+          onSaveMultiple={handleSaveMultipleEvaluations}
           subject={selectedSubject}
           evaluation={editingEvaluation}
           defaultMaxPoints={config.defaultMaxPoints}
