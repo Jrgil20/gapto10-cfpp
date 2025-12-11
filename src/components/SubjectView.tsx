@@ -4,11 +4,11 @@ import { Badge } from './ui/badge'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
-import { Progress } from './ui/progress'
 import { Separator } from './ui/separator'
 import { Alert, AlertDescription } from './ui/alert'
-import { Plus, Calendar, Percent, CheckCircle, WarningCircle } from '@phosphor-icons/react'
+import { Plus, Calendar, Percent } from '@phosphor-icons/react'
 import { validateWeights } from '../lib/calculations'
+import { ProgressVisualization } from './ProgressVisualization'
 
 interface SubjectViewProps {
   subject: Subject
@@ -41,6 +41,18 @@ export function SubjectView({
     return `${points.toFixed(1)}/${maxPoints}`
   }
 
+  const evaluatedWeight = subject.evaluations
+    .filter(e => e.obtainedPoints !== undefined)
+    .reduce((sum, e) => sum + e.weight, 0)
+
+  const evaluatedTheoryWeight = subject.evaluations
+    .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
+    .reduce((sum, e) => sum + e.weight, 0)
+
+  const evaluatedPracticeWeight = subject.evaluations
+    .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
+    .reduce((sum, e) => sum + e.weight, 0)
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
@@ -66,87 +78,20 @@ export function SubjectView({
 
         {!validation.isValid && (
           <Alert variant="destructive">
-            <WarningCircle className="h-4 w-4" />
             <AlertDescription>{validation.message}</AlertDescription>
           </Alert>
         )}
 
-        <Card className="p-6">
-          <div className="flex flex-col gap-4">
-            {subject.hasSplit ? (
-              <>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Teoría</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-data text-lg">
-                        {calculation.currentTheoryPercentage?.toFixed(1)}%
-                      </span>
-                      {calculation.theoryApproved ? (
-                        <CheckCircle className="text-accent" weight="fill" />
-                      ) : (
-                        <WarningCircle className="text-destructive" weight="fill" />
-                      )}
-                    </div>
-                  </div>
-                  <Progress value={calculation.currentTheoryPercentage} className="h-2" />
-                </div>
-
-                <Separator />
-
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Práctica</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-data text-lg">
-                        {calculation.currentPracticePercentage?.toFixed(1)}%
-                      </span>
-                      {calculation.practiceApproved ? (
-                        <CheckCircle className="text-accent" weight="fill" />
-                      ) : (
-                        <WarningCircle className="text-destructive" weight="fill" />
-                      )}
-                    </div>
-                  </div>
-                  <Progress value={calculation.currentPracticePercentage} className="h-2" />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">Total</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-data text-xl font-bold">
-                      {calculation.currentPercentage.toFixed(1)}%
-                    </span>
-                    {calculation.isApproved ? (
-                      <CheckCircle className="text-accent" weight="fill" size={24} />
-                    ) : (
-                      <WarningCircle className="text-destructive" weight="fill" size={24} />
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">Porcentaje Actual</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-data text-xl font-bold">
-                      {calculation.currentPercentage.toFixed(1)}%
-                    </span>
-                    {calculation.isApproved ? (
-                      <CheckCircle className="text-accent" weight="fill" size={24} />
-                    ) : (
-                      <WarningCircle className="text-destructive" weight="fill" size={24} />
-                    )}
-                  </div>
-                </div>
-                <Progress value={calculation.currentPercentage} className="h-2" />
-              </div>
-            )}
-          </div>
-        </Card>
+        <ProgressVisualization
+          subject={subject}
+          config={config}
+          currentPercentage={calculation.currentPercentage}
+          currentTheoryPercentage={calculation.currentTheoryPercentage}
+          currentPracticePercentage={calculation.currentPracticePercentage}
+          evaluatedWeight={evaluatedWeight}
+          evaluatedTheoryWeight={evaluatedTheoryWeight}
+          evaluatedPracticeWeight={evaluatedPracticeWeight}
+        />
       </div>
 
       {subject.evaluations.length > 0 && (
