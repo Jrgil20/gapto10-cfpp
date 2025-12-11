@@ -1,0 +1,101 @@
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Config } from '../types'
+
+interface ConfigDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  config: Config
+  onSave: (config: Config) => void
+}
+
+export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialogProps) {
+  const [defaultMaxPoints, setDefaultMaxPoints] = useState(config.defaultMaxPoints.toString())
+  const [percentagePerPoint, setPercentagePerPoint] = useState(config.percentagePerPoint.toString())
+  const [passingPercentage, setPassingPercentage] = useState(config.passingPercentage.toString())
+
+  const handleSave = () => {
+    const maxPoints = parseFloat(defaultMaxPoints)
+    const perPoint = parseFloat(percentagePerPoint)
+    const passing = parseFloat(passingPercentage)
+
+    if (maxPoints > 0 && perPoint > 0 && passing > 0 && passing <= 100) {
+      onSave({
+        defaultMaxPoints: maxPoints,
+        percentagePerPoint: perPoint,
+        passingPercentage: passing
+      })
+      onOpenChange(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Configuración</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 py-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="default-max-points">Puntos máximos por defecto</Label>
+            <Input
+              id="default-max-points"
+              type="number"
+              value={defaultMaxPoints}
+              onChange={(e) => setDefaultMaxPoints(e.target.value)}
+              min="1"
+              step="0.5"
+            />
+            <p className="text-xs text-muted-foreground">
+              Valor predeterminado para nuevas evaluaciones
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="percentage-per-point">Porcentaje por punto</Label>
+            <Input
+              id="percentage-per-point"
+              type="number"
+              value={percentagePerPoint}
+              onChange={(e) => setPercentagePerPoint(e.target.value)}
+              min="0.1"
+              step="0.1"
+            />
+            <p className="text-xs text-muted-foreground">
+              Cada X% representa un punto en la nota final
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="passing-percentage">Porcentaje mínimo para aprobar</Label>
+            <Input
+              id="passing-percentage"
+              type="number"
+              value={passingPercentage}
+              onChange={(e) => setPassingPercentage(e.target.value)}
+              min="1"
+              max="100"
+              step="1"
+            />
+            <p className="text-xs text-muted-foreground">
+              Porcentaje mínimo requerido para aprobar una materia
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>
+            Guardar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

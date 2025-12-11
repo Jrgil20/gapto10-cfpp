@@ -1,5 +1,297 @@
+import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { Subject, Evaluation, Config, CalculationMode } from './types'
+import { SubjectDialog } from './components/SubjectDialog'
+import { EvaluationDialog } from './components/EvaluationDialog'
+import { SubjectView } from './components/SubjectView'
+import { ConfigDialog } from './components/ConfigDialog'
+import { Button } from './components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet'
+import { Card } from './components/ui/card'
+import { Separator } from './components/ui/separator'
+import { toast } from 'sonner'
+import { List, Plus, GearSix, Download, Upload, Trash } from '@phosphor-icons/react'
+import { calculateRequiredNotes } from './lib/calculations'
+
 function App() {
-    return <div></div>
+  const [subjects, setSubjects] = useKV<Subject[]>('subjects', [])
+  const [config, setConfig] = useKV<Config>('config', {
+    defaultMaxPoints: 20,
+    percentagePerPoint: 5,
+    passingPercentage: 50
+  })
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
+  const [subjectDialogOpen, setSubjectDialogOpen] = useState(false)
+  const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false)
+  const [configDialogOpen, setConfigDialogOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [calculationMode, setCalculationMode] = useState<CalculationMode>('normal')
+
+  const selectedSubject = subjects?.find(s => s.id === selectedSubjectId)
+
+  const handleSaveSubject = (subjectData: Omit<Subject, 'id' | 'evaluations'>) => {
+    setSubjects((current) => [
+      ...(current || []),
+      {
+        ...subjectData,
+        id: Date.now().toString(),
+        evaluations: []
+      }
+    ])
+    toast.success('Materia creada')
+  }
+
+  const handleDeleteSubject = (subjectId: string) => {
+    setSubjects((current) => (current || []).filter(s => s.id !== subjectId))
+    if (selectedSubjectId === subjectId) {
+      setSelectedSubjectId(null)
+    }
+    toast.success('Materia eliminada')
+  }
+
+  const handleSaveEvaluation = (evaluationData: Omit<Evaluation, 'id'>) => {
+    if (!selectedSubjectId) return
+
+    setSubjects((current) =>
+      (current || []).map((subject) => {
+        if (subject.id === selectedSubjectId) {
+          return {
+            ...subject,
+            evaluations: [
+              ...subject.evaluations,
+              {
+                ...evaluationData,
+                id: Date.now().toString()
+              }
+            ]
+          }
+        }
+        return subject
+      })
+    )
+    toast.success('Evaluación agregada')
+  }
+
+  const handleUpdateNote = (evaluationId: string, points: number | undefined) => {
+    if (!selectedSubjectId) return
+
+    setSubjects((current) =>
+      (current || []).map((subject) => {
+        if (subject.id === selectedSubjectId) {
+          return {
+            ...subject,
+            evaluations: subject.evaluations.map((eval_) =>
+              eval_.id === evaluationId
+                ? { ...eval_, obtainedPoints: points }
+                : eval_
+            )
+          }
+        }
+        return subject
+      })
+    )
+  }
+
+  const handleExport = () => {
+    const data = {
+      subjects: subjects || [],
+      config: config || { defaultMaxPoints: 20, percentagePerPoint: 5, passingPercentage: 50 },
+      exportDate: new Date().toISOString()
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `notas-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    toast.success('Datos exportados')
+  }
+
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/json'
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string)
+          
+          if (data.subjects && Array.isArray(data.subjects)) {
+            setSubjects(data.subjects)
+          }
+          if (data.config) {
+            setConfig(data.config)
+          }
+          
+          toast.success('Datos importados correctamente')
+        } catch (error) {
+          toast.error('Error al importar: archivo inválido')
+        }
+      }
+      reader.readAsText(file)
+    }
+    
+    input.click()
+  }
+
+  const calculation = selectedSubject && config
+    ? calculateRequiredNotes(selectedSubject, config)
+    : null
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card sticky top-0 z-10">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <List size={20} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80">
+                <SheetHeader>
+                  <SheetTitle>Materias</SheetTitle>
+                </SheetHeader>
+                
+                <div className="flex flex-col gap-4 mt-6">
+                  <Button onClick={() => setSubjectDialogOpen(true)} className="w-full">
+                    <Plus className="mr-2" />
+                    Nueva Materia
+                  </Button>
+
+                  <Separator />
+
+                  <div className="flex flex-col gap-2">
+                    {(subjects || []).map((subject) => (
+                      <Card
+                        key={subject.id}
+                        className={`p-3 cursor-pointer transition-all hover:shadow-md ${
+                          selectedSubjectId === subject.id
+                            ? 'border-primary bg-primary/5'
+                            : ''
+                        }`}
+                        onClick={() => {
+                          setSelectedSubjectId(subject.id)
+                          setSheetOpen(false)
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col gap-1 flex-1">
+                            <h3 className="font-semibold">{subject.name}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {subject.evaluations.length} evaluaciones
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteSubject(subject.id)
+                            }}
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+
+                    {(!subjects || subjects.length === 0) && (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No hay materias registradas
+                      </p>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex flex-col gap-2">
+                    <Button variant="outline" onClick={handleExport} className="w-full">
+                      <Download className="mr-2" />
+                      Exportar Datos
+                    </Button>
+                    <Button variant="outline" onClick={handleImport} className="w-full">
+                      <Upload className="mr-2" />
+                      Importar Datos
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <h1 className="text-xl font-bold">Gestor de Notas Académicas</h1>
+          </div>
+
+          <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
+            <GearSix size={20} />
+          </Button>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-6">
+        {selectedSubject && calculation && config ? (
+          <SubjectView
+            subject={selectedSubject}
+            calculation={calculation}
+            config={config}
+            onAddEvaluation={() => setEvaluationDialogOpen(true)}
+            onUpdateNote={handleUpdateNote}
+            calculationMode={calculationMode}
+            onCalculationModeChange={setCalculationMode}
+          />
+        ) : (
+          <Card className="p-12 flex flex-col items-center justify-center gap-4 text-center">
+            <h2 className="text-2xl font-semibold">Bienvenido</h2>
+            <p className="text-muted-foreground max-w-md">
+              Comienza creando una materia para gestionar tus evaluaciones y calcular las notas necesarias para aprobar.
+            </p>
+            <Button onClick={() => setSubjectDialogOpen(true)} size="lg">
+              <Plus className="mr-2" />
+              Crear Primera Materia
+            </Button>
+          </Card>
+        )}
+      </main>
+
+      <SubjectDialog
+        open={subjectDialogOpen}
+        onOpenChange={setSubjectDialogOpen}
+        onSave={handleSaveSubject}
+      />
+
+      {selectedSubject && config && (
+        <EvaluationDialog
+          open={evaluationDialogOpen}
+          onOpenChange={setEvaluationDialogOpen}
+          onSave={handleSaveEvaluation}
+          subject={selectedSubject}
+          defaultMaxPoints={config.defaultMaxPoints}
+        />
+      )}
+
+      {config && (
+        <ConfigDialog
+          open={configDialogOpen}
+          onOpenChange={setConfigDialogOpen}
+          config={config}
+          onSave={setConfig}
+        />
+      )}
+    </div>
+  )
 }
 
 export default App
