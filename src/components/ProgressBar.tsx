@@ -1,6 +1,5 @@
 import { Target } from '@phosphor-icons/react'
-import { getProgressStatus, calculateProgressMetrics } from '../lib/calculations'
-import { StatusIndicator } from './StatusIndicator'
+import { calculateProgressMetrics } from '../lib/calculations'
 import { ProgressParams } from '../types'
 
 interface ProgressBarProps extends ProgressParams {
@@ -8,7 +7,6 @@ interface ProgressBarProps extends ProgressParams {
   isTotal?: boolean
   compact?: boolean
   showLabels?: boolean
-  showTooltip?: boolean
 }
 
 /**
@@ -24,48 +22,20 @@ export function ProgressBar({
   isApproved,
   isTotal,
   compact = false,
-  showLabels = true,
-  showTooltip = true
+  showLabels = true
 }: ProgressBarProps) {
   // Usar utilidades centralizadas
   const progressParams: ProgressParams = { current, evaluated, passingPoint, target, label }
   const metrics = calculateProgressMetrics(progressParams)
-  const statusInfo = getProgressStatus(progressParams)
   
   const { currentPercent, evaluatedPercent, passingPercent } = metrics
 
   return (
     <div className="flex flex-col gap-2">
       {label && showLabels && (
-        <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium ${isTotal ? 'font-semibold' : ''}`}>
-            {label}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="font-data text-sm">
-              {current.toFixed(1)}% {evaluated > 0 && <span className="text-muted-foreground">/ {evaluated.toFixed(1)}%</span>}
-            </span>
-            {showTooltip && !isTotal && (
-              <StatusIndicator 
-                statusInfo={statusInfo} 
-                size="sm"
-                highEvaluatedWeight={evaluated >= (target * 0.75)}
-              />
-            )}
-            {isTotal && (
-              <StatusIndicator 
-                statusInfo={{ 
-                  status: isApproved ? 'approved' : 'impossible',
-                  label: isApproved ? 'Aprobado' : 'No aprobado',
-                  details: ''
-                }}
-                size="sm"
-                showTooltip={false}
-                useCircleForApproved
-              />
-            )}
-          </div>
-        </div>
+        <span className={`text-sm font-medium ${isTotal ? 'font-semibold' : ''}`}>
+          {label}
+        </span>
       )}
 
       <div className={`relative ${compact ? 'h-6' : 'pt-8 pb-0 h-14'} w-full`}>

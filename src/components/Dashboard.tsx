@@ -47,8 +47,6 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
         {subjects.map((subject) => {
           const calculation = calculateRequiredNotes(subject, config)
           const passingPoint = config.passingPercentage
-          const currentPoints = (calculation.currentPercentage / config.percentagePerPoint).toFixed(1)
-          const totalPoints = (100 / config.percentagePerPoint).toFixed(0)
 
           // Calcular peso evaluado
           const evaluatedWeight = subject.evaluations
@@ -78,6 +76,9 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             target: 100
           })
 
+          const currentPoints = (calculation.currentPercentage / config.percentagePerPoint).toFixed(1)
+          const totalPoints = (100 / config.percentagePerPoint).toFixed(0)
+
           return (
             <Card 
               key={subject.id} 
@@ -103,80 +104,63 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                       {subject.evaluations.length} evaluaciones • {subject.evaluations.filter(e => e.obtainedPoints !== undefined).length} completadas
                     </p>
                   </div>
-                  <StatusIndicator 
-                    statusInfo={statusInfo}
-                    size="lg"
-                    highEvaluatedWeight={evaluatedWeight >= 75}
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-data text-2xl font-bold text-primary">
+                          {currentPoints}
+                        </span>
+                        <span className="text-muted-foreground text-sm">/ {totalPoints} pts</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts
+                      </span>
+                    </div>
+                    <StatusIndicator 
+                      statusInfo={statusInfo}
+                      size="lg"
+                      highEvaluatedWeight={evaluatedWeight >= 75}
+                    />
+                  </div>
                 </div>
 
-                {/* Puntos y porcentaje */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-data text-2xl font-bold text-primary">
-                      {currentPoints}
-                    </span>
-                    <span className="text-muted-foreground">/ {totalPoints} pts</span>
-                    <span className="font-data text-lg text-muted-foreground ml-auto">
-                      {calculation.currentPercentage.toFixed(1)}%
-                    </span>
-                  </div>
-
-                  {/* Barra de progreso compacta */}
-                  <div className="mt-2">
-                    {!subject.hasSplit ? (
+                {/* Barra de progreso completa */}
+                <div>
+                  {!subject.hasSplit ? (
                       <ProgressBar
+                        label="Progreso Total"
                         current={calculation.currentPercentage}
                         evaluated={evaluatedWeight}
                         passingPoint={passingPoint}
                         target={100}
-                        compact
-                        showLabels={false}
                       />
                     ) : (
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-4">
                         {/* Progreso de Teoría */}
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-muted-foreground">Teoría</span>
-                            <span className="font-data text-xs">
-                              {calculation.currentTheoryPercentage?.toFixed(1)}%
-                            </span>
-                          </div>
-                          <ProgressBar
-                            current={calculation.currentTheoryPercentage || 0}
-                            evaluated={subject.evaluations
-                              .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
-                              .reduce((sum, e) => sum + e.weight, 0)}
-                            passingPoint={theoryTarget}
-                            target={subject.theoryWeight || 100}
-                            compact
-                            showLabels={false}
-                          />
-                        </div>
+                        <ProgressBar
+                          label="Teoría"
+                          current={calculation.currentTheoryPercentage || 0}
+                          evaluated={subject.evaluations
+                            .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
+                            .reduce((sum, e) => sum + e.weight, 0)}
+                          passingPoint={theoryTarget}
+                          target={subject.theoryWeight || 100}
+                          isApproved={theoryApproved}
+                        />
 
                         {/* Progreso de Práctica */}
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-muted-foreground">Práctica</span>
-                            <span className="font-data text-xs">
-                              {calculation.currentPracticePercentage?.toFixed(1)}%
-                            </span>
-                          </div>
-                          <ProgressBar
-                            current={calculation.currentPracticePercentage || 0}
-                            evaluated={subject.evaluations
-                              .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
-                              .reduce((sum, e) => sum + e.weight, 0)}
-                            passingPoint={practiceTarget}
-                            target={subject.practiceWeight || 100}
-                            compact
-                            showLabels={false}
-                          />
-                        </div>
+                        <ProgressBar
+                          label="Práctica"
+                          current={calculation.currentPracticePercentage || 0}
+                          evaluated={subject.evaluations
+                            .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
+                            .reduce((sum, e) => sum + e.weight, 0)}
+                          passingPoint={practiceTarget}
+                          target={subject.practiceWeight || 100}
+                          isApproved={practiceApproved}
+                        />
                       </div>
                     )}
-                  </div>
                 </div>
               </div>
             </Card>

@@ -144,7 +144,15 @@ export function SubjectView({
 
           <TabsContent value={calculationMode} className="mt-4">
             <div className="flex flex-col gap-3">
-              {subject.evaluations.map((evaluation) => (
+              {[...subject.evaluations]
+                .sort((a, b) => {
+                  // Ordenar por fecha (las que no tienen fecha van al final)
+                  if (!a.date && !b.date) return 0
+                  if (!a.date) return 1
+                  if (!b.date) return -1
+                  return new Date(a.date).getTime() - new Date(b.date).getTime()
+                })
+                .map((evaluation) => (
                 <Card key={evaluation.id} className="p-4">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between">
@@ -190,7 +198,7 @@ export function SubjectView({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs text-muted-foreground">Nota Obtenida</span>
                         <Input
@@ -227,14 +235,24 @@ export function SubjectView({
                       )}
 
                       {evaluation.obtainedPoints !== undefined && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-muted-foreground">Porcentaje Obtenido</span>
-                          <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
-                            <span className="font-data font-semibold">
-                              {((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight).toFixed(2)}%
-                            </span>
+                        <>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">Porcentaje Obtenido</span>
+                            <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                              <span className="font-data font-semibold">
+                                {((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight).toFixed(2)}%
+                              </span>
+                            </div>
                           </div>
-                        </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">Puntos Obtenidos</span>
+                            <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                              <span className="font-data font-semibold text-accent">
+                                {(((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight) / config.percentagePerPoint).toFixed(2)} pts
+                              </span>
+                            </div>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>

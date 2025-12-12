@@ -59,12 +59,19 @@ export function ProgressVisualization({
     target: 100
   })
 
+  const completedEvaluations = subject.evaluations.filter(e => e.obtainedPoints !== undefined).length
+
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-6">
         {/* Encabezado con puntos y estado */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Nota Acumulada</h2>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold">Nota Acumulada</h2>
+            <p className="text-sm text-muted-foreground">
+              {subject.evaluations.length} evaluaciones • {completedEvaluations} completadas
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center gap-2">
@@ -73,8 +80,8 @@ export function ProgressVisualization({
                 </span>
                 <span className="text-muted-foreground">/ {totalPoints} pts</span>
               </div>
-              <span className="font-data text-xl text-muted-foreground">
-                {currentPercentage.toFixed(2)}%
+              <span className="text-sm text-muted-foreground">
+                Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts
               </span>
             </div>
             <StatusIndicator 
