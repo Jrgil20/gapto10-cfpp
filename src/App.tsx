@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { Subject, Evaluation, Config, CalculationMode } from './types'
 import { SubjectDialog } from './components/SubjectDialog'
@@ -7,6 +7,7 @@ import { SubjectView } from './components/SubjectView'
 import { ConfigDialog } from './components/ConfigDialog'
 import { Dashboard } from './components/Dashboard'
 import { ExportImportDialog } from './components/ExportImportDialog'
+import { WelcomeDialog } from './components/WelcomeDialog'
 import { Button } from './components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet'
 import { Card } from './components/ui/card'
@@ -35,6 +36,8 @@ function App() {
   const [exportImportDialogOpen, setExportImportDialogOpen] = useState(false)
   const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export')
   const [importData, setImportData] = useState<{ subjects: Subject[]; config: Config; exportDate?: string } | undefined>(undefined)
+  const [welcomeShown, setWelcomeShown] = useLocalStorage<boolean>('gapto10-welcome-shown', false)
+  const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false)
 
   const subjectsData = subjects || []
   const configData = config || {
@@ -269,6 +272,17 @@ function App() {
     ? calculateRequiredNotes(selectedSubject, configData)
     : null
 
+  // Mostrar diálogo de bienvenida solo la primera vez y si no hay datos
+  useEffect(() => {
+    if (!welcomeShown && subjectsData.length === 0) {
+      setWelcomeDialogOpen(true)
+    }
+  }, [welcomeShown, subjectsData.length])
+
+  const handleAcceptWelcome = () => {
+    setWelcomeShown(true)
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-card sticky top-0 z-10">
@@ -502,6 +516,12 @@ function App() {
         importData={exportImportMode === 'import' ? importData : undefined}
         onConfirm={exportImportMode === 'export' ? handleConfirmExport : handleConfirmImport}
         showJson={configData?.showJsonInExportImport ?? false}
+      />
+
+      <WelcomeDialog
+        open={welcomeDialogOpen}
+        onOpenChange={setWelcomeDialogOpen}
+        onAccept={handleAcceptWelcome}
       />
     </div>
   )
