@@ -9,7 +9,7 @@ import { Dashboard } from './components/Dashboard'
 import { ExportImportDialog } from './components/ExportImportDialog'
 import { WelcomeDialog } from './components/WelcomeDialog'
 import { Button } from './components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from './components/ui/sheet'
 import { Card } from './components/ui/card'
 import { Separator } from './components/ui/separator'
 import { toast } from 'sonner'
@@ -463,6 +463,9 @@ Total: 100% (20 pts.)
               <SheetContent side="left" className="w-[280px] sm:w-80">
                 <SheetHeader>
                   <SheetTitle>Materias</SheetTitle>
+                  <SheetDescription>
+                    Gestiona tus materias y evaluaciones
+                  </SheetDescription>
                 </SheetHeader>
                 
                 <div className="flex flex-col gap-4 mt-6">

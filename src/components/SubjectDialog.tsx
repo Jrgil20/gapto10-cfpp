@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -48,6 +48,9 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{subject ? 'Editar Materia' : 'Nueva Materia'}</DialogTitle>
+          <DialogDescription>
+            {subject ? 'Modifica los datos de la materia' : 'Ingresa los datos de la nueva materia'}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col gap-4 py-4">

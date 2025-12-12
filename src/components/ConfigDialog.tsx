@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -48,6 +48,9 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Configuración</DialogTitle>
+          <DialogDescription>
+            Ajusta los parámetros de cálculo de notas
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-4">
