@@ -21,6 +21,7 @@ export interface Config {
   defaultMaxPoints: number
   percentagePerPoint: number
   passingPercentage: number
+  showJsonInExportImport?: boolean
 }
 
 export interface CalculationResult {

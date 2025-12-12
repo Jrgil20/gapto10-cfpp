@@ -6,6 +6,7 @@ import { EvaluationDialog } from './components/EvaluationDialog'
 import { SubjectView } from './components/SubjectView'
 import { ConfigDialog } from './components/ConfigDialog'
 import { Dashboard } from './components/Dashboard'
+import { ExportImportDialog } from './components/ExportImportDialog'
 import { Button } from './components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet'
 import { Card } from './components/ui/card'
@@ -19,7 +20,8 @@ function App() {
   const [config, setConfig] = useLocalStorage<Config>('gapto10-config', {
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
-    passingPercentage: 50
+    passingPercentage: 50,
+    showJsonInExportImport: false
   })
 
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
@@ -30,12 +32,16 @@ function App() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('pessimistic')
   const [view, setView] = useState<'dashboard' | 'subject'>('dashboard')
+  const [exportImportDialogOpen, setExportImportDialogOpen] = useState(false)
+  const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export')
+  const [importData, setImportData] = useState<{ subjects: Subject[]; config: Config; exportDate?: string } | undefined>(undefined)
 
   const subjectsData = subjects || []
   const configData = config || {
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
-    passingPercentage: 50
+    passingPercentage: 50,
+    showJsonInExportImport: false
   }
 
   const selectedSubject = subjectsData.find(s => s.id === selectedSubjectId)
@@ -183,6 +189,11 @@ function App() {
   }
 
   const handleExport = () => {
+    setExportImportMode('export')
+    setExportImportDialogOpen(true)
+  }
+
+  const handleConfirmExport = () => {
     const data = {
       subjects: subjectsData,
       config: configData,
@@ -216,14 +227,20 @@ function App() {
         try {
           const data = JSON.parse(event.target?.result as string)
           
-          if (data.subjects && Array.isArray(data.subjects)) {
-            setSubjects(data.subjects)
+          // Validar estructura básica
+          if (!data.subjects || !Array.isArray(data.subjects)) {
+            toast.error('Error al importar: archivo inválido - falta array de materias')
+            return
           }
-          if (data.config) {
-            setConfig(data.config)
-          }
-          
-          toast.success('Datos importados correctamente')
+
+          // Mostrar diálogo de preview
+          setImportData({
+            subjects: data.subjects,
+            config: data.config || configData,
+            exportDate: data.exportDate
+          })
+          setExportImportMode('import')
+          setExportImportDialogOpen(true)
         } catch (error) {
           toast.error('Error al importar: archivo inválido')
         }
@@ -232,6 +249,20 @@ function App() {
     }
     
     input.click()
+  }
+
+  const handleConfirmImport = () => {
+    if (!importData) return
+
+    if (importData.subjects && Array.isArray(importData.subjects)) {
+      setSubjects(importData.subjects)
+    }
+    if (importData.config) {
+      setConfig(importData.config)
+    }
+    
+    toast.success('Datos importados correctamente')
+    setImportData(undefined)
   }
 
   const calculation = selectedSubject && configData
@@ -456,6 +487,22 @@ function App() {
           onSave={(newConfig) => setConfig(newConfig)}
         />
       )}
+
+      <ExportImportDialog
+        open={exportImportDialogOpen}
+        onOpenChange={(open) => {
+          setExportImportDialogOpen(open)
+          if (!open) {
+            setImportData(undefined)
+          }
+        }}
+        mode={exportImportMode}
+        subjects={exportImportMode === 'export' ? subjectsData : undefined}
+        config={exportImportMode === 'export' ? configData : undefined}
+        importData={exportImportMode === 'import' ? importData : undefined}
+        onConfirm={exportImportMode === 'export' ? handleConfirmExport : handleConfirmImport}
+        showJson={configData?.showJsonInExportImport ?? false}
+      />
     </div>
   )
 }

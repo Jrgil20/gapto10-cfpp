@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { Checkbox } from './ui/checkbox'
 import { Config } from '../types'
 
 interface ConfigDialogProps {
@@ -16,6 +17,15 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
   const [defaultMaxPoints, setDefaultMaxPoints] = useState(config.defaultMaxPoints.toString())
   const [percentagePerPoint, setPercentagePerPoint] = useState(config.percentagePerPoint.toString())
   const [passingPercentage, setPassingPercentage] = useState(config.passingPercentage.toString())
+  const [showJsonInExportImport, setShowJsonInExportImport] = useState(config.showJsonInExportImport ?? false)
+
+  // Actualizar estado cuando cambia el config
+  useEffect(() => {
+    setDefaultMaxPoints(config.defaultMaxPoints.toString())
+    setPercentagePerPoint(config.percentagePerPoint.toString())
+    setPassingPercentage(config.passingPercentage.toString())
+    setShowJsonInExportImport(config.showJsonInExportImport ?? false)
+  }, [config])
 
   const handleSave = () => {
     const maxPoints = parseFloat(defaultMaxPoints)
@@ -26,7 +36,8 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
       onSave({
         defaultMaxPoints: maxPoints,
         percentagePerPoint: perPoint,
-        passingPercentage: passing
+        passingPercentage: passing,
+        showJsonInExportImport
       })
       onOpenChange(false)
     }
@@ -85,6 +96,20 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
               Porcentaje mínimo requerido para aprobar una materia
             </p>
           </div>
+
+          <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+            <Checkbox
+              id="show-json"
+              checked={showJsonInExportImport}
+              onCheckedChange={(checked) => setShowJsonInExportImport(checked as boolean)}
+            />
+            <Label htmlFor="show-json" className="cursor-pointer">
+              Mostrar JSON en exportar/importar
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Si está activo, se mostrará el JSON directamente en lugar del resumen visual
+          </p>
         </div>
 
         <DialogFooter>
