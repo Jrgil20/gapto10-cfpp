@@ -304,7 +304,7 @@ function ProgressBar({
         </span>
         <div className="flex items-center gap-2">
           <span className="font-data text-sm">
-            {current.toFixed(1)}%
+            {current.toFixed(1)}% {evaluated > 0 && <span className="text-muted-foreground">/ {evaluated.toFixed(1)}%</span>}
           </span>
           {!isTotal && (
             <TooltipProvider>
@@ -333,39 +333,40 @@ function ProgressBar({
         </div>
       </div>
 
-      <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border">
-        <div
-          className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
-          style={{ width: `${Math.min(currentPercent, 100)}%` }}
-        />
-        
-        <div
-          className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
-          style={{ 
-            left: `${Math.min(currentPercent, 100)}%`,
-            width: `${Math.max(0, Math.min(evaluatedPercent - currentPercent, 100 - currentPercent))}%` 
-          }}
-        />
-
+      <div className="relative pb-4">
         {passingPercent > 0 && passingPercent <= 100 && (
           <div
-            className="absolute top-0 h-full w-1 flex items-center justify-center"
-            style={{ left: `${passingPercent}%` }}
+            className="absolute bottom-0 flex flex-col items-center"
+            style={{ left: `${passingPercent}%`, transform: 'translateX(-50%)' }}
           >
-            <div className="absolute w-1 h-full bg-primary" />
             <Target 
               size={20} 
-              className="absolute text-primary bg-background rounded-full" 
+              className="text-primary bg-background rounded-full mb-1" 
               weight="fill"
-              style={{ transform: 'translateX(-50%)' }}
             />
+            <div className="w-0.5 h-4 bg-primary" />
           </div>
         )}
 
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
-            {evaluatedPercent.toFixed(0)}% evaluado
-          </span>
+        <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border">
+          <div
+            className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
+            style={{ width: `${Math.min(currentPercent, 100)}%` }}
+          />
+          
+          <div
+            className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
+            style={{ 
+              left: `${Math.min(currentPercent, 100)}%`,
+              width: `${Math.max(0, Math.min(evaluatedPercent - currentPercent, 100 - currentPercent))}%` 
+            }}
+          />
+
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-data text-xs font-semibold text-foreground bg-background/80 px-2 py-0.5 rounded">
+              {evaluatedPercent.toFixed(0)}% evaluado
+            </span>
+          </div>
         </div>
       </div>
 
