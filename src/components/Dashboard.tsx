@@ -5,6 +5,7 @@ import { Button } from './ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
 import { CheckCircle, WarningCircle, Target, Plus, XCircle, Check, X } from '@phosphor-icons/react'
 import { calculateRequiredNotes } from '../lib/calculations'
+import { ProgressBar } from './ProgressBar'
 
 interface DashboardProps {
   subjects: Subject[]
@@ -188,6 +189,8 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                         evaluated={evaluatedWeight}
                         passingPoint={passingPoint}
                         target={100}
+                        compact
+                        showLabels={false}
                       />
                     ) : (
                       <div className="flex flex-col gap-3">
@@ -206,6 +209,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                             passingPoint={theoryTarget}
                             target={subject.theoryWeight || 100}
                             compact
+                            showLabels={false}
                           />
                         </div>
 
@@ -224,6 +228,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                             passingPoint={practiceTarget}
                             target={subject.practiceWeight || 100}
                             compact
+                            showLabels={false}
                           />
                         </div>
                       </div>
@@ -234,76 +239,6 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             </Card>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-interface ProgressBarProps {
-  current: number
-  evaluated: number
-  passingPoint: number
-  target: number
-  compact?: boolean
-}
-
-function ProgressBar({ current, evaluated, passingPoint, target, compact = false }: ProgressBarProps) {
-  const currentPercent = (current / target) * 100
-  const evaluatedPercent = (evaluated / target) * 100
-  const passingPercent = (passingPoint / target) * 100
-
-  return (
-    <div className={`relative ${compact ? 'h-6' : 'pt-8 pb-0 h-14'} w-full`}>
-      {currentPercent > 0 && currentPercent <= 100 && !compact && (
-        <div
-          className="absolute top-0 flex flex-col items-center z-10"
-          style={{ left: `${Math.min(currentPercent, 100)}%`, transform: 'translateX(-50%)' }}
-        >
-          <div className="bg-accent text-accent-foreground px-1.5 py-0.5 rounded text-[10px] font-data font-semibold mb-0.5 shadow-md border border-accent/20 whitespace-nowrap">
-            {currentPercent.toFixed(1)}%
-          </div>
-          <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-accent" />
-        </div>
-      )}
-
-      <div className={`relative h-6 w-full bg-muted rounded-lg overflow-hidden border ${compact ? '' : 'absolute bottom-0 left-0 right-0'}`}>
-        <div
-          className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
-          style={{ width: `${Math.min(currentPercent, 100)}%` }}
-        />
-        
-        <div
-          className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
-          style={{ 
-            left: `${Math.min(currentPercent, 100)}%`,
-            width: `${Math.max(0, Math.min(evaluatedPercent - currentPercent, 100 - currentPercent))}%` 
-          }}
-        />
-
-        {passingPercent > 0 && passingPercent <= 100 && (
-          <div
-            className="absolute top-0 h-full w-0.5 flex items-center justify-center"
-            style={{ left: `${passingPercent}%` }}
-          >
-            <div className="absolute w-0.5 h-full bg-primary" />
-            {!compact && (
-              <Target 
-                size={16} 
-                className="absolute text-primary bg-background rounded-full" 
-                weight="fill"
-                style={{ transform: 'translateX(-50%)' }}
-              />
-            )}
-          </div>
-        )}
-
-        {!compact && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
-              {evaluatedPercent.toFixed(0)}% evaluado
-            </span>
-          </div>
-        )}
       </div>
     </div>
   )
