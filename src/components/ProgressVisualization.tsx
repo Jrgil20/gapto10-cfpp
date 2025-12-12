@@ -346,6 +346,18 @@ function ProgressBar({
           </div>
         )}
 
+        {evaluatedPercent > 0 && evaluatedPercent <= 100 && (
+          <div
+            className="absolute top-0 flex flex-col items-center z-10"
+            style={{ left: `${Math.min(evaluatedPercent, 100)}%`, transform: 'translateX(-50%)' }}
+          >
+            <div className="bg-muted-foreground/70 text-background px-2 py-0.5 rounded-md text-xs font-data font-semibold mb-0.5 shadow-md border border-muted-foreground/30 whitespace-nowrap">
+              {evaluatedPercent.toFixed(0)}% evaluado
+            </div>
+            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground/70" />
+          </div>
+        )}
+
         <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border absolute bottom-0 left-0 right-0">
           <div
             className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
@@ -374,12 +386,6 @@ function ProgressBar({
               />
             </div>
           )}
-
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
-              {evaluatedPercent.toFixed(0)}% evaluado
-            </span>
-          </div>
         </div>
       </div>
 
