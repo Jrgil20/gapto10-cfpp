@@ -181,52 +181,54 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                     </span>
                   </div>
 
-                  {!subject.hasSplit ? (
-                    <ProgressBar
-                      current={calculation.currentPercentage}
-                      evaluated={evaluatedWeight}
-                      passingPoint={passingPoint}
-                      target={100}
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">Teoría</span>
-                          <span className="font-data text-xs">
-                            {calculation.currentTheoryPercentage?.toFixed(1)}%
-                          </span>
+                  <div className="mt-2">
+                    {!subject.hasSplit ? (
+                      <ProgressBar
+                        current={calculation.currentPercentage}
+                        evaluated={evaluatedWeight}
+                        passingPoint={passingPoint}
+                        target={100}
+                      />
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground">Teoría</span>
+                            <span className="font-data text-xs">
+                              {calculation.currentTheoryPercentage?.toFixed(1)}%
+                            </span>
+                          </div>
+                          <ProgressBar
+                            current={calculation.currentTheoryPercentage || 0}
+                            evaluated={subject.evaluations
+                              .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
+                              .reduce((sum, e) => sum + e.weight, 0)}
+                            passingPoint={theoryTarget}
+                            target={subject.theoryWeight || 100}
+                            compact
+                          />
                         </div>
-                        <ProgressBar
-                          current={calculation.currentTheoryPercentage || 0}
-                          evaluated={subject.evaluations
-                            .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
-                            .reduce((sum, e) => sum + e.weight, 0)}
-                          passingPoint={theoryTarget}
-                          target={subject.theoryWeight || 100}
-                          compact
-                        />
-                      </div>
 
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">Práctica</span>
-                          <span className="font-data text-xs">
-                            {calculation.currentPracticePercentage?.toFixed(1)}%
-                          </span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground">Práctica</span>
+                            <span className="font-data text-xs">
+                              {calculation.currentPracticePercentage?.toFixed(1)}%
+                            </span>
+                          </div>
+                          <ProgressBar
+                            current={calculation.currentPracticePercentage || 0}
+                            evaluated={subject.evaluations
+                              .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
+                              .reduce((sum, e) => sum + e.weight, 0)}
+                            passingPoint={practiceTarget}
+                            target={subject.practiceWeight || 100}
+                            compact
+                          />
                         </div>
-                        <ProgressBar
-                          current={calculation.currentPracticePercentage || 0}
-                          evaluated={subject.evaluations
-                            .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
-                            .reduce((sum, e) => sum + e.weight, 0)}
-                          passingPoint={practiceTarget}
-                          target={subject.practiceWeight || 100}
-                          compact
-                        />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -251,44 +253,58 @@ function ProgressBar({ current, evaluated, passingPoint, target, compact = false
   const passingPercent = (passingPoint / target) * 100
 
   return (
-    <div className="relative h-6 w-full bg-muted rounded-lg overflow-hidden border">
-      <div
-        className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
-        style={{ width: `${Math.min(currentPercent, 100)}%` }}
-      />
-      
-      <div
-        className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
-        style={{ 
-          left: `${Math.min(currentPercent, 100)}%`,
-          width: `${Math.max(0, Math.min(evaluatedPercent - currentPercent, 100 - currentPercent))}%` 
-        }}
-      />
-
-      {passingPercent > 0 && passingPercent <= 100 && (
+    <div className={`relative ${compact ? 'h-6' : 'h-6 pb-6'} w-full`}>
+      {currentPercent > 0 && currentPercent <= 100 && !compact && (
         <div
-          className="absolute top-0 h-full w-0.5 flex items-center justify-center"
-          style={{ left: `${passingPercent}%` }}
+          className="absolute -top-8 flex flex-col items-center z-10"
+          style={{ left: `${Math.min(currentPercent, 100)}%`, transform: 'translateX(-50%)' }}
         >
-          <div className="absolute w-0.5 h-full bg-primary" />
-          {!compact && (
-            <Target 
-              size={16} 
-              className="absolute text-primary bg-background rounded-full" 
-              weight="fill"
-              style={{ transform: 'translateX(-50%)' }}
-            />
-          )}
+          <div className="bg-accent text-accent-foreground px-1.5 py-0.5 rounded text-[10px] font-data font-semibold mb-0.5 shadow-md border border-accent/20 whitespace-nowrap">
+            {currentPercent.toFixed(1)}%
+          </div>
+          <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-accent" />
         </div>
       )}
 
-      {!compact && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
-            {evaluatedPercent.toFixed(0)}% evaluado
-          </span>
-        </div>
-      )}
+      <div className="relative h-6 w-full bg-muted rounded-lg overflow-hidden border">
+        <div
+          className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
+          style={{ width: `${Math.min(currentPercent, 100)}%` }}
+        />
+        
+        <div
+          className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
+          style={{ 
+            left: `${Math.min(currentPercent, 100)}%`,
+            width: `${Math.max(0, Math.min(evaluatedPercent - currentPercent, 100 - currentPercent))}%` 
+          }}
+        />
+
+        {passingPercent > 0 && passingPercent <= 100 && (
+          <div
+            className="absolute top-0 h-full w-0.5 flex items-center justify-center"
+            style={{ left: `${passingPercent}%` }}
+          >
+            <div className="absolute w-0.5 h-full bg-primary" />
+            {!compact && (
+              <Target 
+                size={16} 
+                className="absolute text-primary bg-background rounded-full" 
+                weight="fill"
+                style={{ transform: 'translateX(-50%)' }}
+              />
+            )}
+          </div>
+        )}
+
+        {!compact && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
+              {evaluatedPercent.toFixed(0)}% evaluado
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

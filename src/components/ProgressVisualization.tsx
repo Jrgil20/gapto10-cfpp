@@ -348,6 +348,18 @@ function ProgressBar({
           </div>
         )}
 
+        {currentPercent > 0 && currentPercent <= 100 && (
+          <div
+            className="absolute bottom-0 flex flex-col items-center z-10"
+            style={{ left: `${Math.min(currentPercent, 100)}%`, transform: 'translateX(-50%)' }}
+          >
+            <div className="bg-accent text-accent-foreground px-2 py-0.5 rounded-md text-xs font-data font-semibold mb-1 shadow-md border border-accent/20">
+              {currentPercent.toFixed(1)}%
+            </div>
+            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-accent" />
+          </div>
+        )}
+
         <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border">
           <div
             className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
