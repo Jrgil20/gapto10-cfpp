@@ -588,8 +588,8 @@ Total: 100% (20 pts.)
                   </div>
 
                   {/* Advertencia simple */}
-                  <Alert className="py-2">
-                    <Warning size={16} className="text-destructive" />
+                  <Alert variant="destructive" className="py-2">
+                    <Warning size={16} />
                     <AlertDescription className="text-xs">
                       Esta aplicación NO promueve sacar malas notas. Es una herramienta de gestión y cálculo para apoyar tu aprendizaje responsable.
                     </AlertDescription>
@@ -701,7 +701,7 @@ Total: 100% (20 pts.)
       <footer className="border-t bg-card/50 mt-auto">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-start">
               <span>Desarrollado por</span>
               <a 
                 href="https://github.com/Jrgil20" 
@@ -713,6 +713,7 @@ Total: 100% (20 pts.)
               </a>
               <span>con asistencia de</span>
               <span className="font-semibold text-accent">Claude AI</span>
+              <span className="text-xs opacity-70">• concebido con GitHub Spark</span>
             </div>
             <div className="flex items-center gap-2">
               <a 

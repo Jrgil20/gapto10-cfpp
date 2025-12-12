@@ -60,6 +60,33 @@ npm run preview
 - **Exportar**: Ve a Configuración → Exportar para descargar un archivo JSON con todos tus datos
 - **Importar**: Ve a Configuración → Importar para restaurar datos desde un archivo JSON
 
+## 🤝 Contribuir
+
+¡Las contribuciones son bienvenidas! Si tienes ideas, sugerencias o quieres colaborar en el proyecto:
+
+1. **Reportar problemas o sugerir ideas**: Abre un [issue](https://github.com/Jrgil20/gapto10-cfpp/issues) describiendo el problema o la idea
+2. **Proponer mejoras**: Crea un issue con la etiqueta `enhancement` explicando tu propuesta
+3. **Contribuir código**: 
+   - Haz un fork del repositorio
+   - Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+   - Realiza tus cambios y commits
+   - Abre un Pull Request describiendo los cambios
+
+### Áreas donde puedes contribuir
+
+- 🐛 **Reportar bugs**: Si encuentras algún error, repórtalo
+- 💡 **Nuevas funcionalidades**: Propón ideas para mejorar la aplicación
+- 🎨 **Mejoras de UI/UX**: Sugerencias de diseño y experiencia de usuario
+- 📝 **Documentación**: Mejorar o ampliar la documentación
+- 🌐 **Traducciones**: Ayudar a internacionalizar la aplicación
+- ⚡ **Optimizaciones**: Mejoras de rendimiento o código
+
+## 🙏 Créditos
+
+- **Desarrollado por**: [Jrgil20](https://github.com/Jrgil20)
+- **Asistencia de IA**: Claude AI
+- **Concepción inicial**: GitHub Spark
+
 ## 📄 Licencia
 
 MIT License - Ver archivo [LICENSE](LICENSE) para más detalles.
