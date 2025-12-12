@@ -253,10 +253,10 @@ function ProgressBar({ current, evaluated, passingPoint, target, compact = false
   const passingPercent = (passingPoint / target) * 100
 
   return (
-    <div className={`relative ${compact ? 'h-6' : 'h-6 pb-6'} w-full`}>
+    <div className={`relative ${compact ? 'h-6' : 'pt-8 pb-0 h-14'} w-full`}>
       {currentPercent > 0 && currentPercent <= 100 && !compact && (
         <div
-          className="absolute -top-8 flex flex-col items-center z-10"
+          className="absolute top-0 flex flex-col items-center z-10"
           style={{ left: `${Math.min(currentPercent, 100)}%`, transform: 'translateX(-50%)' }}
         >
           <div className="bg-accent text-accent-foreground px-1.5 py-0.5 rounded text-[10px] font-data font-semibold mb-0.5 shadow-md border border-accent/20 whitespace-nowrap">
@@ -266,7 +266,7 @@ function ProgressBar({ current, evaluated, passingPoint, target, compact = false
         </div>
       )}
 
-      <div className="relative h-6 w-full bg-muted rounded-lg overflow-hidden border">
+      <div className={`relative h-6 w-full bg-muted rounded-lg overflow-hidden border ${compact ? '' : 'absolute bottom-0 left-0 right-0'}`}>
         <div
           className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
           style={{ width: `${Math.min(currentPercent, 100)}%` }}
