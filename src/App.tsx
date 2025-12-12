@@ -13,7 +13,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './co
 import { Card } from './components/ui/card'
 import { Separator } from './components/ui/separator'
 import { toast } from 'sonner'
-import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft } from '@phosphor-icons/react'
+import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft, Question, Lightbulb, Star, GithubLogo, Info, Warning, Copy, FileText } from '@phosphor-icons/react'
+import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover'
+import { Alert, AlertDescription } from './components/ui/alert'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './components/ui/dialog'
+import { ScrollArea } from './components/ui/scroll-area'
 import { calculateRequiredNotes } from './lib/calculations'
 
 function App() {
@@ -38,6 +42,7 @@ function App() {
   const [importData, setImportData] = useState<{ subjects: Subject[]; config: Config; exportDate?: string } | undefined>(undefined)
   const [welcomeShown, setWelcomeShown] = useLocalStorage<boolean>('gapto10-welcome-shown', false)
   const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false)
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false)
 
   const subjectsData = subjects || []
   const configData = config || {
@@ -283,6 +288,167 @@ function App() {
     setWelcomeShown(true)
   }
 
+  const promptText = `# Prompt para Convertir Materias a JSON Estructurado
+
+## Objetivo
+Convertir información de materias académicas y sus evaluaciones a un formato JSON estructurado para un sistema de gestión de calificaciones.
+
+## Instrucciones Generales
+
+### Paso 1: Analizar la información proporcionada
+Lee cuidadosamente toda la información sobre las materias, evaluaciones, fechas y pesos porcentuales.
+
+### Paso 2: Identificar la estructura de cada materia
+Para cada materia determina:
+- ¿La materia tiene división entre teoría y práctica? 
+  - Si menciona "teoría y práctica" o "lab y teoría" → \`hasSplit: true\`
+  - Si no hay división → \`hasSplit: false\`
+
+### Paso 3: Generar el JSON siguiendo esta estructura
+
+\`\`\`json
+{
+  "subjects": [
+    // Array de materias
+  ],
+  "config": {
+    "defaultMaxPoints": 20,
+    "percentagePerPoint": 5,
+    "passingPercentage": 50,
+    "showJsonInExportImport": true
+  },
+  "exportDate": "FECHA_ACTUAL_ISO"
+}
+\`\`\`
+
+## Estructura de Materia SIN División
+
+\`\`\`json
+{
+  "name": "Nombre de la materia",
+  "hasSplit": false,
+  "id": "TIMESTAMP_UNICO",
+  "evaluations": [
+    {
+      "name": "Nombre de la evaluación",
+      "date": "YYYY-MM-DD",
+      "weight": PESO_PORCENTUAL,
+      "maxPoints": 20,
+      "id": "TIMESTAMP_UNICO-INDEX",
+      "obtainedPoints": NOTA_OBTENIDA  // Solo si ya se realizó
+    }
+  ]
+}
+\`\`\`
+
+## Estructura de Materia CON División
+
+\`\`\`json
+{
+  "name": "Nombre de la materia",
+  "hasSplit": true,
+  "theoryWeight": PESO_TEORIA,      // Ej: 70
+  "practiceWeight": PESO_PRACTICA,  // Ej: 30
+  "id": "TIMESTAMP_UNICO",
+  "evaluations": [
+    {
+      "name": "Nombre de la evaluación",
+      "date": "YYYY-MM-DD",
+      "weight": PESO_PORCENTUAL_DENTRO_SECCION,
+      "maxPoints": 20,
+      "section": "theory",  // o "practice"
+      "id": "TIMESTAMP_UNICO-INDEX",
+      "obtainedPoints": NOTA_OBTENIDA  // Opcional
+    }
+  ]
+}
+\`\`\`
+
+## Reglas Importantes
+
+### IDs
+- ID de materia: timestamp único (ej: "1765467948707")
+- ID de evaluación: timestamp-índice (ej: "1765467981415-0")
+- Usa timestamps simulados incrementales para mantener unicidad
+
+### Fechas
+- Formato: "YYYY-MM-DD"
+- Si no se proporciona fecha, usa una fecha futura estimada
+
+### Pesos (weight)
+- Deben sumar 100% dentro de su contexto
+- En materias sin split: suma total = 100%
+- En materias con split: 
+  - Suma de evaluaciones "theory" = 100% dentro de teoría
+  - Suma de evaluaciones "practice" = 100% dentro de práctica
+  - theoryWeight + practiceWeight = 100%
+
+### Puntos Obtenidos (obtainedPoints)
+- Solo incluir si la evaluación ya fue calificada
+- Si no se proporciona, omitir el campo (no poner null ni 0)
+
+### maxPoints
+- Por defecto: 20 (configurable en config)
+- Puede variar según la evaluación
+
+## ejemplo del Input 
+
+\`\`\`
+Fecha Actividades de evaluación Ponderación
+
+16/10/25 Taller en Parejas. 10% (2 pts.)
+
+30/10/25 Prueba Escrita 1. 25% (5 pts.)
+
+20/11/25 Presentación Oral 1 20% (4 pts.)
+
+11/12/25 Presentación Oral 2 20% (4 pts.)
+
+18/12/25 o 08/01/26 Prueba Escrita 2. 25% (5 pts.)
+
+Total: 100% (20 pts.)
+\`\`\`
+
+## Proceso de Conversión Paso a Paso
+
+1. **Identificar materias**: Contar cuántas materias hay
+2. **Para cada materia**:
+   - Extraer nombre
+   - Determinar si tiene split
+   - Si tiene split: extraer pesos de teoría/práctica
+   - Generar ID único
+3. **Para cada evaluación**:
+   - Extraer nombre
+   - Convertir fecha a formato YYYY-MM-DD
+   - Extraer peso (convertir porcentajes a números)
+   - Identificar maxPoints (o usar 20 por defecto)
+   - Si hay nota obtenida, incluir obtainedPoints
+   - Si la materia tiene split, asignar section ("theory" o "practice")
+   - Generar ID único
+4. **Validar pesos**: Verificar que sumen 100% en cada contexto
+5. **Generar JSON completo** con config y exportDate
+
+## Notas Adicionales
+
+- Si falta información, usar valores por defecto razonables
+- Mantener consistencia en nombres (primera letra mayúscula)
+- Respetar acentos y caracteres especiales en español
+- Los pesos decimales son válidos (ej: 12.5, 14.5)
+- La fecha de exportación debe ser la fecha actual en formato ISO
+
+---
+
+**Uso**: Copia este prompt y proporciona la información de tus materias en lenguaje natural. El sistema generará automáticamente el JSON estructurado siguiendo estas reglas.`
+
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(promptText)
+      toast.success('Prompt copiado al portapapeles')
+    } catch (error) {
+      toast.error('Error al copiar el prompt')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-card sticky top-0 z-10">
@@ -402,9 +568,106 @@ function App() {
             )}
           </div>
 
-          <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
-            <GearSix size={20} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Question size={20} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <Info size={16} className="text-primary" />
+                      Consejos y Ayuda
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Información útil sobre GapTo10
+                    </p>
+                  </div>
+
+                  {/* Advertencia simple */}
+                  <Alert className="py-2">
+                    <Warning size={16} className="text-destructive" />
+                    <AlertDescription className="text-xs">
+                      Esta aplicación NO promueve sacar malas notas. Es una herramienta de gestión y cálculo para apoyar tu aprendizaje responsable.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="flex flex-col gap-3">
+                    {/* Consejo sobre exportar/importar */}
+                    <Card className="p-3 bg-accent/10 border-accent/20">
+                      <div className="flex items-start gap-2">
+                        <div className="rounded-full bg-accent/20 p-1.5 shrink-0">
+                          <Lightbulb size={14} className="text-accent" />
+                        </div>
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <Download size={12} className="text-accent" />
+                            <Upload size={12} className="text-accent" />
+                            <h4 className="font-semibold text-xs">Exportar/Importar</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Exporta tus datos regularmente para acceder desde cualquier dispositivo.
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Consejo sobre prompt para importar */}
+                    <Card className="p-3 bg-secondary/10 border-secondary/20 cursor-pointer hover:bg-secondary/20 transition-colors" onClick={() => setPromptDialogOpen(true)}>
+                      <div className="flex items-start gap-2">
+                        <div className="rounded-full bg-secondary/20 p-1.5 shrink-0">
+                          <FileText size={14} className="text-secondary-foreground" />
+                        </div>
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <FileText size={12} className="text-secondary-foreground" />
+                            <h4 className="font-semibold text-xs">Prompt para Importar</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Usa el siguiente prompt para crear un archivo importable de forma sencilla.
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Consejo sobre GitHub */}
+                    <Card className="p-3 bg-primary/10 border-primary/20">
+                      <div className="flex items-start gap-2">
+                        <div className="rounded-full bg-primary/20 p-1.5 shrink-0">
+                          <GithubLogo size={14} className="text-primary" />
+                        </div>
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <Star size={12} className="text-primary" />
+                            <h4 className="font-semibold text-xs">¿Te gusta la app?</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Dale una estrella al repositorio y deja un issue si tienes problemas.
+                          </p>
+                          <a
+                            href="https://github.com/Jrgil20/gapto10-cfpp"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline mt-1 flex items-center gap-1 w-fit"
+                          >
+                            <GithubLogo size={12} />
+                            Ver en GitHub
+                          </a>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
+              <GearSix size={20} />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -523,6 +786,37 @@ function App() {
         onOpenChange={setWelcomeDialogOpen}
         onAccept={handleAcceptWelcome}
       />
+
+      {/* Diálogo del Prompt */}
+      <Dialog open={promptDialogOpen} onOpenChange={setPromptDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText size={20} className="text-primary" />
+              Prompt para Convertir Materias a JSON
+            </DialogTitle>
+            <DialogDescription>
+              Copia este prompt y úsalo con un asistente de IA para generar archivos JSON importables fácilmente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <pre className="text-xs bg-muted p-4 rounded-lg whitespace-pre-wrap font-mono overflow-x-auto">
+              {promptText}
+            </pre>
+          </ScrollArea>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPromptDialogOpen(false)}>
+              Cerrar
+            </Button>
+            <Button onClick={handleCopyPrompt} className="flex items-center gap-2">
+              <Copy size={16} />
+              Copiar Prompt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
