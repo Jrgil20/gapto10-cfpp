@@ -452,15 +452,15 @@ Total: 100% (20 pts.)
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="shrink-0">
                   <List size={20} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80">
+              <SheetContent side="left" className="w-[280px] sm:w-80">
                 <SheetHeader>
                   <SheetTitle>Materias</SheetTitle>
                 </SheetHeader>
@@ -530,34 +530,31 @@ Total: 100% (20 pts.)
             </Sheet>
 
             {view === 'subject' && selectedSubject ? (
-              <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
+              <Button variant="ghost" size="icon" onClick={handleBackToDashboard} className="shrink-0">
                 <ArrowLeft size={20} className="text-primary" />
               </Button>
             ) : (
-              <Button variant="ghost" size="icon" onClick={handleBackToDashboard}>
+              <Button variant="ghost" size="icon" onClick={handleBackToDashboard} className="shrink-0">
                 <House size={20} weight="fill" className="text-accent" />
               </Button>
             )}
 
             {view === 'subject' && selectedSubject ? (
-              <h1 className="text-xl font-bold">{selectedSubject.name}</h1>
+              <h1 className="text-base sm:text-xl font-bold truncate">{selectedSubject.name}</h1>
             ) : (
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold leading-tight">
-                  {['G', 'a', 'p', 'T', 'o', '1', '0'].map((char, i) => (
-                    <span key={i} className="text-foreground">
-                      {char}
-                    </span>
-                  ))}
-                  <span className="text-base ml-2">
-                    {' - Cuánto Falta Para Pasar'.split('').map((char, i) => (
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold leading-tight flex flex-wrap items-baseline">
+                  <span className="text-foreground shrink-0">GapTo10</span>
+                  <span className="hidden sm:inline text-sm sm:text-base ml-2 text-muted-foreground">
+                    {' - '}
+                    {'Cuánto Falta Para Pasar'.split('').map((char, i) => (
                       <span key={i} className={/[A-ZÁÉÍÓÚÑ]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
                         {char}
                       </span>
                     ))}
                   </span>
                 </h1>
-                <p className="text-xs">
+                <p className="text-xs hidden sm:block">
                   {'Gestor de Notas Académicas'.split('').map((char, i) => (
                     <span key={i} className={/[A-ZÁÉÍÓÚÑ]/.test(char) ? 'text-primary' : 'text-muted-foreground'}>
                       {char}
@@ -568,11 +565,12 @@ Total: 100% (20 pts.)
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Question size={20} />
+                <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                  <Question size={18} className="sm:hidden" />
+                  <Question size={20} className="hidden sm:block" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80" align="end">
@@ -664,14 +662,15 @@ Total: 100% (20 pts.)
               </PopoverContent>
             </Popover>
 
-            <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)}>
-              <GearSix size={20} />
+            <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)} className="h-9 w-9 sm:h-10 sm:w-10">
+              <GearSix size={18} className="sm:hidden" />
+              <GearSix size={20} className="hidden sm:block" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 flex-1">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 flex-1">
         {view === 'dashboard' ? (
           <Dashboard
             subjects={subjectsData}
@@ -699,10 +698,10 @@ Total: 100% (20 pts.)
 
       {/* Footer */}
       <footer className="border-t bg-card/50 mt-auto">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
+        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
             <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-start">
-              <span>Desarrollado por</span>
+              <span>Por</span>
               <a 
                 href="https://github.com/Jrgil20" 
                 target="_blank" 
@@ -711,9 +710,10 @@ Total: 100% (20 pts.)
               >
                 Jrgil20
               </a>
-              <span>con asistencia de</span>
+              <span className="hidden sm:inline">con asistencia de</span>
+              <span className="sm:hidden">+</span>
               <span className="font-semibold text-accent">Claude AI</span>
-              <span className="text-xs opacity-70">• concebido con GitHub Spark</span>
+              <span className="text-xs opacity-70 hidden sm:inline">• concebido con GitHub Spark</span>
             </div>
             <div className="flex items-center gap-2">
               <a 
@@ -722,10 +722,11 @@ Total: 100% (20 pts.)
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 hover:text-primary transition-colors"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
-                <span>Ver código</span>
+                <span className="hidden sm:inline">Ver código</span>
+                <span className="sm:hidden">GitHub</span>
               </a>
               <span>•</span>
               <span>2025</span>
@@ -790,28 +791,29 @@ Total: 100% (20 pts.)
 
       {/* Diálogo del Prompt */}
       <Dialog open={promptDialogOpen} onOpenChange={setPromptDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh]">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[85vh] sm:max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText size={20} className="text-primary" />
-              Prompt para Convertir Materias a JSON
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <FileText size={18} className="text-primary shrink-0 sm:hidden" />
+              <FileText size={20} className="text-primary shrink-0 hidden sm:block" />
+              <span className="truncate">Prompt para Materias JSON</span>
             </DialogTitle>
-            <DialogDescription>
-              Copia este prompt y úsalo con un asistente de IA para generar archivos JSON importables fácilmente.
+            <DialogDescription className="text-xs sm:text-sm">
+              Copia este prompt y úsalo con un asistente de IA para generar archivos JSON.
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <pre className="text-xs bg-muted p-4 rounded-lg whitespace-pre-wrap font-mono overflow-x-auto">
+          <ScrollArea className="max-h-[55vh] sm:max-h-[60vh] pr-2 sm:pr-4">
+            <pre className="text-[10px] sm:text-xs bg-muted p-2 sm:p-4 rounded-lg whitespace-pre-wrap font-mono overflow-x-auto">
               {promptText}
             </pre>
           </ScrollArea>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPromptDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setPromptDialogOpen(false)} className="w-full sm:w-auto">
               Cerrar
             </Button>
-            <Button onClick={handleCopyPrompt} className="flex items-center gap-2">
+            <Button onClick={handleCopyPrompt} className="flex items-center justify-center gap-2 w-full sm:w-auto">
               <Copy size={16} />
               Copiar Prompt
             </Button>

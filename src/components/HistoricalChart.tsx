@@ -100,32 +100,34 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
   const passingNote = (config.passingPercentage / 100) * 20 // Nota mínima para aprobar (ej: 10/20)
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Rendimiento por Evaluación</h2>
-          <p className="text-sm text-muted-foreground">
+    <Card className="p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-0.5 sm:gap-1">
+          <h2 className="text-base sm:text-lg font-semibold">Rendimiento por Evaluación</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Notas obtenidas en cada evaluación (escala 0-20)
           </p>
         </div>
 
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+        <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <LineChart data={chartData} margin={{ top: 15, right: 15, left: 0, bottom: 5 }} className="sm:!m-[20px_30px_10px_10px]">
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
             <XAxis 
               dataKey="date" 
               className="text-xs"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
               tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
               axisLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+              interval="preserveStartEnd"
             />
             <YAxis 
               className="text-xs font-data"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
               tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
               axisLine={{ stroke: 'hsl(var(--muted-foreground))' }}
               domain={[0, 20]}
-              ticks={[0, 5, 10, 15, 20]}
+              ticks={[0, 10, 20]}
+              width={25}
             />
             <Tooltip content={<CustomTooltip />} />
             

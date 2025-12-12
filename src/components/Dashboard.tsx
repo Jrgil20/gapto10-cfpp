@@ -20,12 +20,12 @@ interface DashboardProps {
 export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: DashboardProps) {
   if (!subjects || subjects.length === 0) {
     return (
-      <Card className="p-12 flex flex-col items-center justify-center gap-4 text-center">
-        <h2 className="text-2xl font-semibold">Bienvenido</h2>
-        <p className="text-muted-foreground max-w-md">
+      <Card className="p-6 sm:p-12 flex flex-col items-center justify-center gap-4 text-center">
+        <h2 className="text-xl sm:text-2xl font-semibold">Bienvenido</h2>
+        <p className="text-sm sm:text-base text-muted-foreground max-w-md">
           Comienza creando una materia para gestionar tus evaluaciones y calcular las notas necesarias para aprobar.
         </p>
-        <Button onClick={onAddSubject} size="lg">
+        <Button onClick={onAddSubject} size="lg" className="w-full sm:w-auto">
           <Plus className="mr-2" />
           Crear Primera Materia
         </Button>
@@ -34,16 +34,16 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard de Materias</h1>
-        <Button onClick={onAddSubject}>
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Dashboard de Materias</h1>
+        <Button onClick={onAddSubject} className="w-full sm:w-auto">
           <Plus className="mr-2" />
           Nueva Materia
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {subjects.map((subject) => {
           const calculation = calculateRequiredNotes(subject, config)
           const passingPoint = config.passingPercentage
@@ -129,35 +129,35 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
           return (
             <Card 
               key={subject.id} 
-              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1 hover:border-primary/50"
+              className="p-4 sm:p-6 cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1 hover:border-primary/50"
               onClick={() => onSelectSubject(subject.id)}
             >
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 sm:gap-4">
                 {/* Encabezado con nombre y estado */}
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col gap-2">
-                    <h2 className="text-xl font-bold">{subject.name}</h2>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-2 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
                     {subject.hasSplit && (
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className={theoryApproved ? "border-accent/50" : "border-destructive/50"}>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        <Badge variant="outline" className={`text-xs ${theoryApproved ? "border-accent/50" : "border-destructive/50"}`}>
                           Teoría {subject.theoryWeight}%
                         </Badge>
-                        <Badge variant="outline" className={practiceApproved ? "border-accent/50" : "border-destructive/50"}>
+                        <Badge variant="outline" className={`text-xs ${practiceApproved ? "border-accent/50" : "border-destructive/50"}`}>
                           Práctica {subject.practiceWeight}%
                         </Badge>
                       </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {subject.evaluations.length} evaluaciones • {subject.evaluations.filter(e => e.obtainedPoints !== undefined).length} completadas
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-data text-2xl font-bold text-primary">
+                  <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
+                    <div className="flex flex-col items-start sm:items-end gap-0.5 sm:gap-1">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="font-data text-xl sm:text-2xl font-bold text-primary">
                           {currentPoints}
                         </span>
-                        <span className="text-muted-foreground text-sm">/ {totalPoints} pts</span>
+                        <span className="text-muted-foreground text-xs sm:text-sm">/ {totalPoints} pts</span>
                       </div>
                       <span className="text-xs text-muted-foreground">
                         Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts

@@ -91,23 +91,23 @@ export function SubjectView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold">{subject.name}</h1>
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-2 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold">{subject.name}</h1>
             {subject.hasSplit && (
-              <div className="flex gap-2">
-                <Badge variant="outline">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <Badge variant="outline" className="text-xs">
                   Teoría {subject.theoryWeight}%
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   Práctica {subject.practiceWeight}%
                 </Badge>
               </div>
             )}
           </div>
-          <Button onClick={onAddEvaluation}>
+          <Button onClick={onAddEvaluation} className="w-full sm:w-auto">
             <Plus className="mr-2" />
             Agregar Evaluación
           </Button>
@@ -137,14 +137,15 @@ export function SubjectView({
 
       {subject.evaluations.length > 0 && (
         <Tabs value={calculationMode} onValueChange={(v) => onCalculationModeChange(v as CalculationMode)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pessimistic" className="flex items-center justify-center gap-1.5">
-              Pesimista
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="pessimistic" className="flex items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <span className="hidden sm:inline">Pesimista</span>
+              <span className="sm:hidden">Pesim.</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors hidden sm:block"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
@@ -159,13 +160,13 @@ export function SubjectView({
                 </TooltipContent>
               </Tooltip>
             </TabsTrigger>
-            <TabsTrigger value="normal" className="flex items-center justify-center gap-1.5">
+            <TabsTrigger value="normal" className="flex items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm py-2 px-1 sm:px-3">
               Normal
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors hidden sm:block"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
@@ -180,13 +181,14 @@ export function SubjectView({
                 </TooltipContent>
               </Tooltip>
             </TabsTrigger>
-            <TabsTrigger value="optimistic" className="flex items-center justify-center gap-1.5">
-              Optimista
+            <TabsTrigger value="optimistic" className="flex items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <span className="hidden sm:inline">Optimista</span>
+              <span className="sm:hidden">Optim.</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors hidden sm:block"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
@@ -203,8 +205,8 @@ export function SubjectView({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={calculationMode} className="mt-4">
-            <div className="flex flex-col gap-3">
+          <TabsContent value={calculationMode} className="mt-3 sm:mt-4">
+            <div className="flex flex-col gap-2 sm:gap-3">
               {[...subject.evaluations]
                 .sort((a, b) => {
                   // Ordenar por fecha (las que no tienen fecha van al final)
@@ -214,13 +216,13 @@ export function SubjectView({
                   return new Date(a.date).getTime() - new Date(b.date).getTime()
                 })
                 .map((evaluation) => (
-                <Card key={evaluation.id} className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{evaluation.name}</h3>
-                          <div className="flex items-center gap-1">
+                <Card key={evaluation.id} className="p-3 sm:p-4">
+                  <div className="flex flex-col gap-2 sm:gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                          <h3 className="font-semibold text-sm sm:text-base truncate">{evaluation.name}</h3>
+                          <div className="flex items-center gap-0.5 shrink-0">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -239,27 +241,31 @@ export function SubjectView({
                             </Button>
                           </div>
                         </div>
-                        <div className="flex gap-2 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                           {evaluation.date && (
                             <div className="flex items-center gap-1">
-                              <Calendar size={14} />
-                              {new Date(evaluation.date).toLocaleDateString()}
+                              <Calendar size={12} className="sm:hidden" />
+                              <Calendar size={14} className="hidden sm:block" />
+                              <span className="hidden sm:inline">{new Date(evaluation.date).toLocaleDateString()}</span>
+                              <span className="sm:hidden">{new Date(evaluation.date).toLocaleDateString('es', { day: '2-digit', month: '2-digit' })}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1">
-                            <Percent size={14} />
+                            <Percent size={12} className="sm:hidden" />
+                            <Percent size={14} className="hidden sm:block" />
                             {evaluation.weight}%
                           </div>
                           {evaluation.section && (
-                            <Badge variant="secondary" className="text-xs">
-                              {evaluation.section === 'theory' ? 'Teoría' : 'Práctica'}
+                            <Badge variant="secondary" className="text-xs py-0 px-1.5">
+                              {evaluation.section === 'theory' ? 'T' : 'P'}
+                              <span className="hidden sm:inline">{evaluation.section === 'theory' ? 'eoría' : 'ráctica'}</span>
                             </Badge>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs text-muted-foreground">Nota Obtenida</span>
                         <Input
@@ -325,9 +331,9 @@ export function SubjectView({
       )}
 
       {subject.evaluations.length === 0 && (
-        <Card className="p-8 flex flex-col items-center justify-center gap-2 text-center">
-          <p className="text-muted-foreground">No hay evaluaciones registradas</p>
-          <Button onClick={onAddEvaluation} variant="outline">
+        <Card className="p-6 sm:p-8 flex flex-col items-center justify-center gap-2 text-center">
+          <p className="text-sm sm:text-base text-muted-foreground">No hay evaluaciones registradas</p>
+          <Button onClick={onAddEvaluation} variant="outline" className="w-full sm:w-auto">
             <Plus className="mr-2" />
             Agregar primera evaluación
           </Button>

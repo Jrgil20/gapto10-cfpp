@@ -101,25 +101,25 @@ export function ProgressVisualization({
   const completedEvaluations = subject.evaluations.filter(e => e.obtainedPoints !== undefined).length
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-col gap-6">
+    <Card className="p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         {/* Encabezado con puntos y estado */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Nota Acumulada</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-base sm:text-lg font-semibold">Nota Acumulada</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {subject.evaluations.length} evaluaciones • {completedEvaluations} completadas
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-2">
-                <span className="font-data text-3xl font-bold text-primary">
+          <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
+            <div className="flex flex-col items-start sm:items-end gap-0.5 sm:gap-1">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="font-data text-2xl sm:text-3xl font-bold text-primary">
                   {currentPoints}
                 </span>
-                <span className="text-muted-foreground">/ {totalPoints} pts</span>
+                <span className="text-xs sm:text-base text-muted-foreground">/ {totalPoints} pts</span>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts
               </span>
             </div>
@@ -177,18 +177,19 @@ export function ProgressVisualization({
         </div>
 
         {/* Leyenda */}
-        <div className="flex flex-wrap gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-accent" />
+        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-accent" />
             <span className="text-muted-foreground">Obtenido</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-muted" />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-muted" />
             <span className="text-muted-foreground">Por evaluar</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Target size={16} className="text-primary" weight="fill" />
-            <span className="text-muted-foreground">Mínimo para aprobar</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Target size={14} className="text-primary sm:hidden" weight="fill" />
+            <Target size={16} className="text-primary hidden sm:block" weight="fill" />
+            <span className="text-muted-foreground">Mín. aprobar</span>
           </div>
         </div>
       </div>
