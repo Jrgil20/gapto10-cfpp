@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog'
-import { Plus, Calendar, Percent, PencilSimple, Trash } from '@phosphor-icons/react'
+import { Plus, Calendar, Percent, PencilSimple, Trash, Question } from '@phosphor-icons/react'
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
 import { validateWeights } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
@@ -137,9 +138,69 @@ export function SubjectView({
       {subject.evaluations.length > 0 && (
         <Tabs value={calculationMode} onValueChange={(v) => onCalculationModeChange(v as CalculationMode)}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pessimistic">Pesimista</TabsTrigger>
-            <TabsTrigger value="normal">Normal</TabsTrigger>
-            <TabsTrigger value="optimistic">Optimista</TabsTrigger>
+            <TabsTrigger value="pessimistic" className="flex items-center justify-center gap-1.5">
+              Pesimista
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Question size={14} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-semibold mb-1">Modo Pesimista</p>
+                  <p className="text-xs">
+                    Calcula la nota mínima necesaria para aprobar. Asume que obtendrás el mínimo en todas las evaluaciones restantes.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            <TabsTrigger value="normal" className="flex items-center justify-center gap-1.5">
+              Normal
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Question size={14} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-semibold mb-1">Modo Normal</p>
+                  <p className="text-xs">
+                    Proyecta basándose en tu rendimiento actual. Considera tu promedio y el peso de cada evaluación.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            <TabsTrigger value="optimistic" className="flex items-center justify-center gap-1.5">
+              Optimista
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 hover:bg-muted/50 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Question size={14} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-semibold mb-1">Modo Optimista</p>
+                  <p className="text-xs">
+                    Calcula para alcanzar una meta ambiciosa. Asume que obtendrás buenas notas en las evaluaciones restantes.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={calculationMode} className="mt-4">

@@ -68,13 +68,60 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             ? calculation.currentPracticePercentage >= practiceTarget
             : true
 
-          // Usar utilidad centralizada para obtener estado
-          const statusInfo = getProgressStatus({
-            current: calculation.currentPercentage,
-            evaluated: evaluatedWeight,
-            passingPoint,
-            target: 100
-          })
+          // Para materias con split, verificar si es imposible aprobar teoría o práctica por separado
+          let statusInfo
+          if (subject.hasSplit && subject.theoryWeight && subject.practiceWeight) {
+            const evaluatedTheoryWeight = subject.evaluations
+              .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
+              .reduce((sum, e) => sum + e.weight, 0)
+            
+            const evaluatedPracticeWeight = subject.evaluations
+              .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
+              .reduce((sum, e) => sum + e.weight, 0)
+            
+            const theoryStatus = getProgressStatus({
+              current: calculation.currentTheoryPercentage || 0,
+              evaluated: evaluatedTheoryWeight,
+              passingPoint: theoryTarget,
+              target: subject.theoryWeight,
+              label: 'Teoría'
+            })
+            
+            const practiceStatus = getProgressStatus({
+              current: calculation.currentPracticePercentage || 0,
+              evaluated: evaluatedPracticeWeight,
+              passingPoint: practiceTarget,
+              target: subject.practiceWeight,
+              label: 'Práctica'
+            })
+            
+            // Si alguna sección es imposible de aprobar, el estado general es imposible
+            if (theoryStatus.status === 'impossible' || practiceStatus.status === 'impossible') {
+              statusInfo = {
+                status: 'impossible' as const,
+                label: 'Imposible aprobar',
+                details: theoryStatus.status === 'impossible' 
+                  ? `No es posible aprobar la teoría. ${theoryStatus.details}`
+                  : `No es posible aprobar la práctica. ${practiceStatus.details}`
+              }
+            } else {
+              // Si ambas secciones pueden aprobarse, verificar el total combinado
+              statusInfo = getProgressStatus({
+                current: calculation.currentPercentage,
+                evaluated: evaluatedWeight,
+                passingPoint,
+                target: 100
+              })
+            }
+          } else {
+            // Para materias sin split, usar la lógica normal
+            statusInfo = getProgressStatus({
+              current: calculation.currentPercentage,
+              evaluated: evaluatedWeight,
+              passingPoint,
+              target: 100
+            })
+          }
 
           const currentPoints = (calculation.currentPercentage / config.percentagePerPoint).toFixed(1)
           const totalPoints = (100 / config.percentagePerPoint).toFixed(0)

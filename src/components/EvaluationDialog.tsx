@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Checkbox } from './ui/checkbox'
+import { Alert, AlertDescription } from './ui/alert'
 import { Evaluation, Subject } from '../types'
 
 interface EvaluationDialogProps {
@@ -40,6 +41,7 @@ export function EvaluationDialog({
   const [multipleCount, setMultipleCount] = useState('2')
   const [sameWeight, setSameWeight] = useState(true)
   const [multipleEvals, setMultipleEvals] = useState<MultipleEvaluation[]>([])
+  const [isExtraPoints, setIsExtraPoints] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -53,6 +55,7 @@ export function EvaluationDialog({
         setMultipleCount('2')
         setSameWeight(true)
         setMultipleEvals([])
+        setIsExtraPoints(false)
       } else {
         setName('')
         setDate('')
@@ -63,6 +66,7 @@ export function EvaluationDialog({
         setMultipleCount('2')
         setSameWeight(true)
         setMultipleEvals([])
+        setIsExtraPoints(false)
       }
     }
   }, [open, evaluation, defaultMaxPoints])
@@ -98,11 +102,63 @@ export function EvaluationDialog({
     )
   }
 
+  // Calcular el peso total actual de las evaluaciones existentes
+  const currentTotalWeight = useMemo(() => {
+    if (subject.hasSplit && section) {
+      // Si tiene split, calcular solo para la sección correspondiente
+      const existingEvals = subject.evaluations.filter(
+        e => e.section === section && (!evaluation || e.id !== evaluation.id)
+      )
+      return existingEvals.reduce((sum, e) => sum + e.weight, 0)
+    } else {
+      // Sin split, calcular todas las evaluaciones
+      const existingEvals = subject.evaluations.filter(
+        e => !evaluation || e.id !== evaluation.id
+      )
+      return existingEvals.reduce((sum, e) => sum + e.weight, 0)
+    }
+  }, [subject.evaluations, evaluation, subject.hasSplit, section])
+
+  // Calcular el peso total que se está agregando
+  const newTotalWeight = useMemo(() => {
+    if (isMultiple && !evaluation) {
+      if (sameWeight && weight) {
+        const count = parseInt(multipleCount) || 2
+        const weightNum = parseFloat(weight) || 0
+        return weightNum * count
+      } else {
+        return multipleEvals.reduce((sum, eval_) => {
+          const weightNum = parseFloat(eval_.weight) || 0
+          return sum + weightNum
+        }, 0)
+      }
+    } else {
+      return parseFloat(weight) || 0
+    }
+  }, [isMultiple, evaluation, sameWeight, weight, multipleCount, multipleEvals])
+
+  // Calcular el peso total final
+  const finalTotalWeight = currentTotalWeight + newTotalWeight
+  const maxAllowedWeight = subject.hasSplit 
+    ? (section === 'theory' ? (subject.theoryWeight || 0) : (subject.practiceWeight || 0))
+    : 100
+
+  // Verificar si se excede el 100% (siempre mostrar advertencia si excede)
+  const exceedsLimit = finalTotalWeight > maxAllowedWeight
+  
+  // Validar si se puede guardar (solo si no excede o si son puntos extra)
+  const canSave = !exceedsLimit || isExtraPoints
+
   const handleSave = () => {
     if (!name.trim() || !maxPoints) return
     
     const maxPointsNum = parseFloat(maxPoints)
     if (maxPointsNum <= 0) return
+
+    // Validar que no se exceda el límite a menos que sean puntos extra
+    if (!canSave) {
+      return
+    }
 
     if (isMultiple && !evaluation) {
       const count = parseInt(multipleCount) || 2
@@ -314,13 +370,47 @@ export function EvaluationDialog({
               </Select>
             </div>
           )}
+
+          {exceedsLimit && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold">
+                      Has excedido el {maxAllowedWeight}% de la materia.
+                    </span>
+                    <div className="text-sm space-y-0.5">
+                      {subject.hasSplit && section && (
+                        <div>Peso actual de {section === 'theory' ? 'teoría' : 'práctica'}: {currentTotalWeight.toFixed(1)}%</div>
+                      )}
+                      {!subject.hasSplit && (
+                        <div>Peso actual: {currentTotalWeight.toFixed(1)}%</div>
+                      )}
+                      <div>Peso a agregar: {newTotalWeight.toFixed(1)}%</div>
+                      <div>Total: {finalTotalWeight.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                    <Checkbox
+                      id="extra-points"
+                      checked={isExtraPoints}
+                      onCheckedChange={(checked) => setIsExtraPoints(checked as boolean)}
+                    />
+                    <Label htmlFor="extra-points" className="cursor-pointer text-sm">
+                      Estas evaluaciones son puntos extra (no cuentan para el 100%)
+                    </Label>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} disabled={!canSave}>
             Guardar
           </Button>
         </DialogFooter>

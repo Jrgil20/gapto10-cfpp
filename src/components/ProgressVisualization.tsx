@@ -51,13 +51,52 @@ export function ProgressVisualization({
     ? currentPracticePercentage >= practiceTarget
     : true
 
-  // Usar utilidad centralizada para obtener estado
-  const statusInfo = getProgressStatus({
-    current: currentPercentage,
-    evaluated: evaluatedWeight,
-    passingPoint,
-    target: 100
-  })
+  // Para materias con split, verificar si es imposible aprobar teoría o práctica por separado
+  let statusInfo
+  if (subject.hasSplit && subject.theoryWeight && subject.practiceWeight) {
+    const theoryStatus = getProgressStatus({
+      current: currentTheoryPercentage || 0,
+      evaluated: evaluatedTheoryWeight || 0,
+      passingPoint: theoryTarget,
+      target: subject.theoryWeight,
+      label: 'Teoría'
+    })
+    
+    const practiceStatus = getProgressStatus({
+      current: currentPracticePercentage || 0,
+      evaluated: evaluatedPracticeWeight || 0,
+      passingPoint: practiceTarget,
+      target: subject.practiceWeight,
+      label: 'Práctica'
+    })
+    
+    // Si alguna sección es imposible de aprobar, el estado general es imposible
+    if (theoryStatus.status === 'impossible' || practiceStatus.status === 'impossible') {
+      statusInfo = {
+        status: 'impossible' as const,
+        label: 'Imposible aprobar',
+        details: theoryStatus.status === 'impossible' 
+          ? `No es posible aprobar la teoría. ${theoryStatus.details}`
+          : `No es posible aprobar la práctica. ${practiceStatus.details}`
+      }
+    } else {
+      // Si ambas secciones pueden aprobarse, verificar el total combinado
+      statusInfo = getProgressStatus({
+        current: currentPercentage,
+        evaluated: evaluatedWeight,
+        passingPoint,
+        target: 100
+      })
+    }
+  } else {
+    // Para materias sin split, usar la lógica normal
+    statusInfo = getProgressStatus({
+      current: currentPercentage,
+      evaluated: evaluatedWeight,
+      passingPoint,
+      target: 100
+    })
+  }
 
   const completedEvaluations = subject.evaluations.filter(e => e.obtainedPoints !== undefined).length
 
