@@ -333,34 +333,20 @@ function ProgressBar({
         </div>
       </div>
 
-      <div className="relative pb-4">
-        {passingPercent > 0 && passingPercent <= 100 && (
-          <div
-            className="absolute bottom-0 flex flex-col items-center"
-            style={{ left: `${passingPercent}%`, transform: 'translateX(-50%)' }}
-          >
-            <Target 
-              size={20} 
-              className="text-primary bg-background rounded-full mb-1" 
-              weight="fill"
-            />
-            <div className="w-0.5 h-4 bg-primary" />
-          </div>
-        )}
-
+      <div className="relative pt-8 pb-0 h-14 w-full">
         {currentPercent > 0 && currentPercent <= 100 && (
           <div
-            className="absolute bottom-0 flex flex-col items-center z-10"
+            className="absolute top-0 flex flex-col items-center z-10"
             style={{ left: `${Math.min(currentPercent, 100)}%`, transform: 'translateX(-50%)' }}
           >
-            <div className="bg-accent text-accent-foreground px-2 py-0.5 rounded-md text-xs font-data font-semibold mb-1 shadow-md border border-accent/20">
+            <div className="bg-accent text-accent-foreground px-2 py-0.5 rounded-md text-xs font-data font-semibold mb-0.5 shadow-md border border-accent/20 whitespace-nowrap">
               {currentPercent.toFixed(1)}%
             </div>
             <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-accent" />
           </div>
         )}
 
-        <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border">
+        <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden border absolute bottom-0 left-0 right-0">
           <div
             className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
             style={{ width: `${Math.min(currentPercent, 100)}%` }}
@@ -374,8 +360,23 @@ function ProgressBar({
             }}
           />
 
+          {passingPercent > 0 && passingPercent <= 100 && (
+            <div
+              className="absolute top-0 h-full w-0.5 flex items-center justify-center"
+              style={{ left: `${passingPercent}%` }}
+            >
+              <div className="absolute w-0.5 h-full bg-primary" />
+              <Target 
+                size={16} 
+                className="absolute text-primary bg-background rounded-full" 
+                weight="fill"
+                style={{ transform: 'translateX(-50%)' }}
+              />
+            </div>
+          )}
+
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-data text-xs font-semibold text-foreground bg-background/80 px-2 py-0.5 rounded">
+            <span className="font-data text-xs font-medium text-foreground/70 mix-blend-difference">
               {evaluatedPercent.toFixed(0)}% evaluado
             </span>
           </div>
