@@ -1,12 +1,9 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
-import { CheckCircle, WarningCircle, Target, X, Check } from '@phosphor-icons/react'
+import { Target } from '@phosphor-icons/react'
+import { getProgressStatus, calculateProgressMetrics } from '../lib/calculations'
+import { StatusIndicator } from './StatusIndicator'
+import { ProgressParams } from '../types'
 
-interface ProgressBarProps {
-  label?: string
-  current: number
-  evaluated: number
-  passingPoint: number
-  target: number
+interface ProgressBarProps extends ProgressParams {
   isApproved?: boolean
   isTotal?: boolean
   compact?: boolean
@@ -14,6 +11,10 @@ interface ProgressBarProps {
   showTooltip?: boolean
 }
 
+/**
+ * Barra de progreso visual que muestra el avance hacia un objetivo.
+ * Incluye indicadores de porcentaje actual, evaluado y punto de aprobación.
+ */
 export function ProgressBar({ 
   label,
   current, 
@@ -26,67 +27,12 @@ export function ProgressBar({
   showLabels = true,
   showTooltip = true
 }: ProgressBarProps) {
-  const currentPercent = (current / target) * 100
-  const evaluatedPercent = (evaluated / target) * 100
-  const passingPercent = (passingPoint / target) * 100
-
-  const percentageOfEvaluated = evaluated > 0 ? (current / evaluated) * 100 : 0
-  const remainingWeight = target - evaluated
-  const maxPossiblePercentage = current + remainingWeight
-  const canStillPass = maxPossiblePercentage >= passingPoint
-  const neededFromRemaining = Math.max(0, passingPoint - current)
-  const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
-
-  const getStatusInfo = () => {
-    if (evaluated === 0) {
-      return {
-        icon: <WarningCircle size={16} className="text-muted-foreground" weight="fill" />,
-        status: 'Sin evaluaciones',
-        details: `No hay evaluaciones${label ? ` de ${label.toLowerCase()}` : ''} completadas aún`
-      }
-    }
-
-    if (current >= passingPoint) {
-      const statusText = evaluated >= (target * 0.75) ? 'Aprobado (alto rendimiento)' : 'Aprobado'
-      const statusIcon = evaluated >= (target * 0.75)
-        ? <Check size={16} className="text-accent" weight="bold" />
-        : <Check size={16} className="text-orange" weight="bold" />
-      return {
-        icon: statusIcon,
-        status: statusText,
-        details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight.toFixed(1)}% por evaluar.` : ''}`
-      }
-    }
-
-    if (!canStillPass) {
-      return {
-        icon: <X size={16} className="text-destructive" weight="bold" />,
-        status: 'Imposible aprobar',
-        details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado. No es posible alcanzar el ${passingPoint.toFixed(1)}% necesario con los ${remainingWeight.toFixed(1)}% restantes.`
-      }
-    }
-
-    let statusText = ''
-    let statusIcon: React.ReactElement
-    if (percentageOfEvaluated >= 70) {
-      statusText = 'Rendimiento alto'
-      statusIcon = <WarningCircle size={16} className="text-accent" weight="fill" />
-    } else if (percentageOfEvaluated >= 40) {
-      statusText = 'Rendimiento moderado'
-      statusIcon = <WarningCircle size={16} className="text-orange" weight="fill" />
-    } else {
-      statusText = 'Rendimiento bajo'
-      statusIcon = <WarningCircle size={16} className="text-destructive" weight="fill" />
-    }
-
-    return {
-      icon: statusIcon,
-      status: statusText,
-      details: `Has obtenido ${current.toFixed(1)}% de ${evaluated}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight.toFixed(1)}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
-    }
-  }
-
-  const statusInfo = getStatusInfo()
+  // Usar utilidades centralizadas
+  const progressParams: ProgressParams = { current, evaluated, passingPoint, target, label }
+  const metrics = calculateProgressMetrics(progressParams)
+  const statusInfo = getProgressStatus(progressParams)
+  
+  const { currentPercent, evaluatedPercent, passingPercent } = metrics
 
   return (
     <div className="flex flex-col gap-2">
@@ -100,34 +46,30 @@ export function ProgressBar({
               {current.toFixed(1)}% {evaluated > 0 && <span className="text-muted-foreground">/ {evaluated.toFixed(1)}%</span>}
             </span>
             {showTooltip && !isTotal && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      {statusInfo.icon}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <div className="flex flex-col gap-1">
-                      <p className="font-semibold">{statusInfo.status}</p>
-                      <p className="text-xs">{statusInfo.details}</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <StatusIndicator 
+                statusInfo={statusInfo} 
+                size="sm"
+                highEvaluatedWeight={evaluated >= (target * 0.75)}
+              />
             )}
             {isTotal && (
-              isApproved ? (
-                <CheckCircle size={16} className="text-accent" weight="fill" />
-              ) : (
-                <WarningCircle size={16} className="text-destructive" weight="fill" />
-              )
+              <StatusIndicator 
+                statusInfo={{ 
+                  status: isApproved ? 'approved' : 'impossible',
+                  label: isApproved ? 'Aprobado' : 'No aprobado',
+                  details: ''
+                }}
+                size="sm"
+                showTooltip={false}
+                useCircleForApproved
+              />
             )}
           </div>
         </div>
       )}
 
       <div className={`relative ${compact ? 'h-6' : 'pt-8 pb-0 h-14'} w-full`}>
+        {/* Indicador de porcentaje actual */}
         {currentPercent > 0 && currentPercent <= 100 && !compact && (
           <div
             className="absolute top-0 flex flex-col items-center z-10"
@@ -140,6 +82,7 @@ export function ProgressBar({
           </div>
         )}
 
+        {/* Indicador de porcentaje evaluado */}
         {evaluatedPercent > 0 && evaluatedPercent <= 100 && !compact && (
           <div
             className="absolute top-0 flex flex-col items-center z-10"
@@ -152,12 +95,15 @@ export function ProgressBar({
           </div>
         )}
 
+        {/* Barra de progreso */}
         <div className={`relative h-8 w-full bg-muted rounded-lg overflow-hidden border ${compact ? '' : 'absolute bottom-0 left-0 right-0'}`}>
+          {/* Sección obtenida */}
           <div
             className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
             style={{ width: `${Math.min(currentPercent, 100)}%` }}
           />
           
+          {/* Sección evaluada pero no obtenida */}
           <div
             className="absolute top-0 h-full bg-muted-foreground/20 transition-all duration-500 ease-out"
             style={{ 
@@ -166,6 +112,7 @@ export function ProgressBar({
             }}
           />
 
+          {/* Marcador de punto de aprobación */}
           {passingPercent > 0 && passingPercent <= 100 && (
             <div
               className="absolute top-0 h-full w-0.5 flex items-center justify-center"
@@ -183,6 +130,7 @@ export function ProgressBar({
         </div>
       </div>
 
+      {/* Etiquetas de escala */}
       {showLabels && !compact && (
         <div className="flex justify-between text-xs text-muted-foreground px-1">
           <span>0%</span>

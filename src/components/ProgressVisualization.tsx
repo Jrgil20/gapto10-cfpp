@@ -1,8 +1,9 @@
 import { Subject, Config } from '../types'
 import { Card } from './ui/card'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
-import { CheckCircle, WarningCircle, Target, X, Check } from '@phosphor-icons/react'
+import { Target } from '@phosphor-icons/react'
 import { ProgressBar } from './ProgressBar'
+import { StatusIndicator } from './StatusIndicator'
+import { getProgressStatus } from '../lib/calculations'
 
 interface ProgressVisualizationProps {
   subject: Subject
@@ -15,66 +16,10 @@ interface ProgressVisualizationProps {
   evaluatedPracticeWeight?: number
 }
 
-function getStatusInfo(
-  currentPercentage: number,
-  evaluatedWeight: number,
-  percentageOfEvaluated: number,
-  passingPoint: number,
-  canStillPass: boolean,
-  remainingWeight: number
-) {
-  if (evaluatedWeight === 0) {
-    return {
-      icon: <WarningCircle className="text-muted-foreground" weight="fill" size={32} />,
-      status: 'Sin evaluaciones',
-      details: 'No hay evaluaciones completadas aún'
-    }
-  }
-
-  const neededFromRemaining = Math.max(0, passingPoint - currentPercentage)
-  const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
-
-  if (currentPercentage >= passingPoint) {
-    const statusIcon = evaluatedWeight >= 75
-      ? <Check className="text-accent" weight="bold" size={32} />
-      : <Check className="text-orange" weight="bold" size={32} />
-    
-    return {
-      icon: statusIcon,
-      status: 'Aprobado',
-      details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight}% por evaluar.` : ''}`
-    }
-  }
-
-  if (!canStillPass) {
-    return {
-      icon: <X className="text-destructive" weight="bold" size={32} />,
-      status: 'Imposible aprobar',
-      details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado. No es posible alcanzar el ${passingPoint}% necesario con los ${remainingWeight}% restantes.`
-    }
-  }
-
-  let statusText = ''
-  let statusIcon: React.ReactElement
-
-  if (percentageOfEvaluated >= 70) {
-    statusText = 'Rendimiento alto'
-    statusIcon = <WarningCircle className="text-accent" weight="fill" size={32} />
-  } else if (percentageOfEvaluated >= 40) {
-    statusText = 'Rendimiento moderado'
-    statusIcon = <WarningCircle className="text-orange" weight="fill" size={32} />
-  } else {
-    statusText = 'Rendimiento bajo'
-    statusIcon = <WarningCircle className="text-destructive" weight="fill" size={32} />
-  }
-
-  return {
-    icon: statusIcon,
-    status: statusText,
-    details: `Has obtenido ${currentPercentage.toFixed(1)}% de ${evaluatedWeight}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
-  }
-}
-
+/**
+ * Visualización completa del progreso de una materia.
+ * Incluye barra de progreso general y desglose por teoría/práctica si aplica.
+ */
 export function ProgressVisualization({
   subject,
   config,
@@ -91,6 +36,7 @@ export function ProgressVisualization({
   
   const isApproved = currentPercentage >= passingPoint
   
+  // Calcular objetivos de teoría y práctica
   const theoryTarget = subject.hasSplit && subject.theoryWeight
     ? (subject.theoryWeight * config.passingPercentage) / 100
     : 0
@@ -105,23 +51,18 @@ export function ProgressVisualization({
     ? currentPracticePercentage >= practiceTarget
     : true
 
-  const percentageOfEvaluated = evaluatedWeight > 0 ? (currentPercentage / evaluatedWeight) * 100 : 0
-  const remainingWeight = 100 - evaluatedWeight
-  const maxPossiblePercentage = currentPercentage + remainingWeight
-  const canStillPass = maxPossiblePercentage >= passingPoint
-
-  const statusInfo = getStatusInfo(
-    currentPercentage, 
-    evaluatedWeight, 
-    percentageOfEvaluated, 
-    passingPoint, 
-    canStillPass,
-    remainingWeight
-  )
+  // Usar utilidad centralizada para obtener estado
+  const statusInfo = getProgressStatus({
+    current: currentPercentage,
+    evaluated: evaluatedWeight,
+    passingPoint,
+    target: 100
+  })
 
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-6">
+        {/* Encabezado con puntos y estado */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Nota Acumulada</h2>
           <div className="flex items-center gap-3">
@@ -136,24 +77,15 @@ export function ProgressVisualization({
                 {currentPercentage.toFixed(2)}%
               </span>
             </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="cursor-help">
-                    {statusInfo.icon}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold">{statusInfo.status}</p>
-                    <p className="text-xs">{statusInfo.details}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <StatusIndicator 
+              statusInfo={statusInfo}
+              size="lg"
+              highEvaluatedWeight={evaluatedWeight >= 75}
+            />
           </div>
         </div>
 
+        {/* Barras de progreso */}
         <div className="flex flex-col gap-4">
           {!subject.hasSplit ? (
             <ProgressBar
@@ -191,12 +123,14 @@ export function ProgressVisualization({
                   passingPoint={passingPoint}
                   target={100}
                   isTotal
+                  isApproved={isApproved}
                 />
               </div>
             </>
           )}
         </div>
 
+        {/* Leyenda */}
         <div className="flex flex-wrap gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-accent" />

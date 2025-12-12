@@ -1,4 +1,91 @@
-import { Subject, Evaluation, Config, CalculationResult } from '../types'
+import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus } from '../types'
+
+/**
+ * Calcula el estado de progreso basado en los parámetros dados.
+ * Esta función centraliza la lógica que antes estaba duplicada en:
+ * - ProgressBar.tsx
+ * - ProgressVisualization.tsx
+ * - Dashboard.tsx
+ */
+export function getProgressStatus(params: ProgressParams): StatusInfo {
+  const { current, evaluated, passingPoint, target, label } = params
+  
+  const percentageOfEvaluated = evaluated > 0 ? (current / evaluated) * 100 : 0
+  const remainingWeight = target - evaluated
+  const maxPossiblePercentage = current + remainingWeight
+  const canStillPass = maxPossiblePercentage >= passingPoint
+  const neededFromRemaining = Math.max(0, passingPoint - current)
+  const neededPercentFromRemaining = remainingWeight > 0 
+    ? (neededFromRemaining / remainingWeight) * 100 
+    : 0
+
+  // Sin evaluaciones
+  if (evaluated === 0) {
+    return {
+      status: 'no_evaluations',
+      label: 'Sin evaluaciones',
+      details: `No hay evaluaciones${label ? ` de ${label.toLowerCase()}` : ''} completadas aún`
+    }
+  }
+
+  // Ya aprobado
+  if (current >= passingPoint) {
+    const highPerformance = evaluated >= (target * 0.75)
+    return {
+      status: 'approved',
+      label: highPerformance ? 'Aprobado (alto rendimiento)' : 'Aprobado',
+      details: `Has obtenido ${current.toFixed(1)}% de ${evaluated.toFixed(1)}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight.toFixed(1)}% por evaluar.` : ''}`
+    }
+  }
+
+  // Imposible aprobar
+  if (!canStillPass) {
+    return {
+      status: 'impossible',
+      label: 'Imposible aprobar',
+      details: `Has obtenido ${current.toFixed(1)}% de ${evaluated.toFixed(1)}% evaluado. No es posible alcanzar el ${passingPoint.toFixed(1)}% necesario con los ${remainingWeight.toFixed(1)}% restantes.`
+    }
+  }
+
+  // Calcular rendimiento
+  let status: ProgressStatus
+  let statusLabel: string
+
+  if (percentageOfEvaluated >= 70) {
+    status = 'high_performance'
+    statusLabel = 'Rendimiento alto'
+  } else if (percentageOfEvaluated >= 40) {
+    status = 'medium_performance'
+    statusLabel = 'Rendimiento moderado'
+  } else {
+    status = 'low_performance'
+    statusLabel = 'Rendimiento bajo'
+  }
+
+  return {
+    status,
+    label: statusLabel,
+    details: `Has obtenido ${current.toFixed(1)}% de ${evaluated.toFixed(1)}% evaluado (${percentageOfEvaluated.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight.toFixed(1)}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
+  }
+}
+
+/**
+ * Calcula métricas de progreso útiles para la UI
+ */
+export function calculateProgressMetrics(params: ProgressParams) {
+  const { current, evaluated, passingPoint, target } = params
+  
+  return {
+    currentPercent: (current / target) * 100,
+    evaluatedPercent: (evaluated / target) * 100,
+    passingPercent: (passingPoint / target) * 100,
+    percentageOfEvaluated: evaluated > 0 ? (current / evaluated) * 100 : 0,
+    remainingWeight: target - evaluated,
+    maxPossiblePercentage: current + (target - evaluated),
+    canStillPass: current + (target - evaluated) >= passingPoint,
+    neededFromRemaining: Math.max(0, passingPoint - current)
+  }
+}
 
 export function calculateCurrentPercentage(
   evaluations: Evaluation[],

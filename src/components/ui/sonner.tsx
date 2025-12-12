@@ -1,13 +1,14 @@
-import { useTheme } from "next-themes"
 import { CSSProperties } from "react"
 import { Toaster as Sonner, ToasterProps } from "sonner"
 
+/**
+ * Componente Toaster simplificado para notificaciones.
+ * Usa tema oscuro por defecto para coincidir con el diseño de la app.
+ */
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       style={
         {

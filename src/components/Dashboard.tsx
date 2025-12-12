@@ -2,10 +2,10 @@ import { Subject, Config } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
-import { CheckCircle, WarningCircle, Target, Plus, XCircle, Check, X } from '@phosphor-icons/react'
-import { calculateRequiredNotes } from '../lib/calculations'
+import { Plus } from '@phosphor-icons/react'
+import { calculateRequiredNotes, getProgressStatus } from '../lib/calculations'
 import { ProgressBar } from './ProgressBar'
+import { StatusIndicator } from './StatusIndicator'
 
 interface DashboardProps {
   subjects: Subject[]
@@ -14,6 +14,9 @@ interface DashboardProps {
   onAddSubject: () => void
 }
 
+/**
+ * Dashboard principal que muestra todas las materias con su progreso.
+ */
 export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: DashboardProps) {
   if (!subjects || subjects.length === 0) {
     return (
@@ -46,12 +49,13 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
           const passingPoint = config.passingPercentage
           const currentPoints = (calculation.currentPercentage / config.percentagePerPoint).toFixed(1)
           const totalPoints = (100 / config.percentagePerPoint).toFixed(0)
-          const isApproved = calculation.currentPercentage >= passingPoint
 
+          // Calcular peso evaluado
           const evaluatedWeight = subject.evaluations
             .filter(e => e.obtainedPoints !== undefined)
             .reduce((sum, e) => sum + e.weight, 0)
 
+          // Calcular objetivos de teoría y práctica
           const theoryTarget = subject.hasSplit && subject.theoryWeight
             ? (subject.theoryWeight * config.passingPercentage) / 100
             : 0
@@ -66,69 +70,13 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             ? calculation.currentPracticePercentage >= practiceTarget
             : true
 
-          const totalPendingWeight = subject.evaluations
-            .filter(e => e.obtainedPoints === undefined)
-            .reduce((sum, e) => sum + e.weight, 0)
-
-          const canStillPass = calculation.currentPercentage + totalPendingWeight >= passingPoint
-
-          const getStatusInfo = () => {
-            if (evaluatedWeight === 0) {
-              return {
-                icon: <WarningCircle className="text-muted-foreground" weight="fill" size={32} />,
-                status: 'Sin evaluaciones',
-                details: 'No hay evaluaciones completadas aún'
-              }
-            }
-
-            const evaluatedPercent = (calculation.currentPercentage / evaluatedWeight) * 100
-            const obtainedPercent = calculation.currentPercentage
-            const remainingWeight = totalPendingWeight
-            const neededFromRemaining = Math.max(0, passingPoint - calculation.currentPercentage)
-            const neededPercentFromRemaining = remainingWeight > 0 ? (neededFromRemaining / remainingWeight) * 100 : 0
-
-            if (calculation.currentPercentage >= passingPoint) {
-              const statusIcon = evaluatedWeight >= 75
-                ? <Check className="text-accent" weight="bold" size={32} />
-                : <Check className="text-orange" weight="bold" size={32} />
-              
-              return {
-                icon: statusIcon,
-                status: 'Aprobado',
-                details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado (${evaluatedPercent.toFixed(1)}% de rendimiento).${remainingWeight > 0 ? ` Quedan ${remainingWeight}% por evaluar.` : ''}`
-              }
-            }
-
-            if (!canStillPass) {
-              return {
-                icon: <X className="text-destructive" weight="bold" size={32} />,
-                status: 'Imposible aprobar',
-                details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado. No es posible alcanzar el ${passingPoint}% necesario con los ${remainingWeight}% restantes.`
-              }
-            }
-
-            let statusText = ''
-            let statusIcon: React.ReactElement
-
-            if (evaluatedPercent >= 70) {
-              statusText = 'Rendimiento alto'
-              statusIcon = <WarningCircle className="text-accent" weight="fill" size={32} />
-            } else if (evaluatedPercent >= 40) {
-              statusText = 'Rendimiento moderado'
-              statusIcon = <WarningCircle className="text-orange" weight="fill" size={32} />
-            } else {
-              statusText = 'Rendimiento bajo'
-              statusIcon = <WarningCircle className="text-destructive" weight="fill" size={32} />
-            }
-
-            return {
-              icon: statusIcon,
-              status: statusText,
-              details: `Has obtenido ${obtainedPercent.toFixed(1)}% de ${evaluatedWeight}% evaluado (${evaluatedPercent.toFixed(1)}% de rendimiento). Necesitas obtener ${neededFromRemaining.toFixed(1)}% de los ${remainingWeight}% restantes (${neededPercentFromRemaining.toFixed(1)}% de rendimiento).`
-            }
-          }
-
-          const statusInfo = getStatusInfo()
+          // Usar utilidad centralizada para obtener estado
+          const statusInfo = getProgressStatus({
+            current: calculation.currentPercentage,
+            evaluated: evaluatedWeight,
+            passingPoint,
+            target: 100
+          })
 
           return (
             <Card 
@@ -137,6 +85,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
               onClick={() => onSelectSubject(subject.id)}
             >
               <div className="flex flex-col gap-4">
+                {/* Encabezado con nombre y estado */}
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col gap-2">
                     <h2 className="text-xl font-bold">{subject.name}</h2>
@@ -154,23 +103,14 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                       {subject.evaluations.length} evaluaciones • {subject.evaluations.filter(e => e.obtainedPoints !== undefined).length} completadas
                     </p>
                   </div>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          {statusInfo.icon}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <div className="flex flex-col gap-1">
-                          <p className="font-semibold">{statusInfo.status}</p>
-                          <p className="text-xs">{statusInfo.details}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <StatusIndicator 
+                    statusInfo={statusInfo}
+                    size="lg"
+                    highEvaluatedWeight={evaluatedWeight >= 75}
+                  />
                 </div>
 
+                {/* Puntos y porcentaje */}
                 <div className="flex flex-col gap-2">
                   <div className="flex items-baseline gap-2">
                     <span className="font-data text-2xl font-bold text-primary">
@@ -182,6 +122,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                     </span>
                   </div>
 
+                  {/* Barra de progreso compacta */}
                   <div className="mt-2">
                     {!subject.hasSplit ? (
                       <ProgressBar
@@ -194,6 +135,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                       />
                     ) : (
                       <div className="flex flex-col gap-3">
+                        {/* Progreso de Teoría */}
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-muted-foreground">Teoría</span>
@@ -213,6 +155,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                           />
                         </div>
 
+                        {/* Progreso de Práctica */}
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-muted-foreground">Práctica</span>

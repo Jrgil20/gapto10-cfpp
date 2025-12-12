@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from './hooks/useLocalStorage'
 import { Subject, Evaluation, Config, CalculationMode } from './types'
 import { SubjectDialog } from './components/SubjectDialog'
 import { EvaluationDialog } from './components/EvaluationDialog'
@@ -15,8 +15,8 @@ import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft } from '
 import { calculateRequiredNotes } from './lib/calculations'
 
 function App() {
-  const [subjects, setSubjects] = useKV<Subject[]>('gapto10-subjects', [])
-  const [config, setConfig] = useKV<Config>('gapto10-config', {
+  const [subjects, setSubjects] = useLocalStorage<Subject[]>('gapto10-subjects', [])
+  const [config, setConfig] = useLocalStorage<Config>('gapto10-config', {
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
     passingPercentage: 50
