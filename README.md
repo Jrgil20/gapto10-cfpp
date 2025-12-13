@@ -38,6 +38,9 @@ npm run build
 
 # Previsualizar build de producción
 npm run preview
+
+# Ejecutar linter
+npm run lint
 ```
 
 ## 📖 Uso
@@ -66,7 +69,7 @@ npm run preview
 
 1. **Reportar problemas o sugerir ideas**: Abre un [issue](https://github.com/Jrgil20/gapto10-cfpp/issues) describiendo el problema o la idea
 2. **Proponer mejoras**: Crea un issue con la etiqueta `enhancement` explicando tu propuesta
-3. **Contribuir código**: 
+3. **Contribuir código**:
    - Haz un fork del repositorio
    - Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
    - Realiza tus cambios y commits

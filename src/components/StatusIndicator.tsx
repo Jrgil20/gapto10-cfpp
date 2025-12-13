@@ -1,6 +1,6 @@
 import { CheckCircle, WarningCircle, X, Check } from '@phosphor-icons/react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
-import { StatusInfo, ProgressStatus } from '../types'
+import { StatusInfo } from '../types'
 
 interface StatusIndicatorProps {
   statusInfo: StatusInfo

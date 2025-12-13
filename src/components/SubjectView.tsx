@@ -5,7 +5,6 @@ import { Badge } from './ui/badge'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
-import { Separator } from './ui/separator'
 import { Alert, AlertDescription } from './ui/alert'
 import {
   AlertDialog,

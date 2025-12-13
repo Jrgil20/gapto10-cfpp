@@ -19,7 +19,7 @@ export function ProgressBar({
   evaluated, 
   passingPoint, 
   target,
-  isApproved,
+  isApproved: _isApproved,
   isTotal,
   compact = false,
   showLabels = true

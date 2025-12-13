@@ -249,7 +249,7 @@ function App() {
           })
           setExportImportMode('import')
           setExportImportDialogOpen(true)
-        } catch (error) {
+        } catch (_error) {
           toast.error('Error al importar: archivo inválido')
         }
       }
@@ -444,7 +444,7 @@ Total: 100% (20 pts.)
     try {
       await navigator.clipboard.writeText(promptText)
       toast.success('Prompt copiado al portapapeles')
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al copiar el prompt')
     }
   }

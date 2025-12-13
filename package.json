@@ -1,6 +1,6 @@
 {
     "name": "gapto10-cfpp",
-    "private": true,
+    "private": false,
     "version": "1.0.0",
     "type": "module",
     "description": "GapTo10 - Cuánto Falta Para Pasar: Gestor de notas académicas",

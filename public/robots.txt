@@ -1,0 +1,36 @@
+# robots.txt para GapTo10 - Cuánto Falta Para Pasar
+
+# Permitir todos los crawlers de búsqueda estándar
+User-agent: *
+Allow: /
+Disallow: /node_modules/
+Disallow: /dist/
+Disallow: /.git/
+
+# Permitir crawlers de IA para indexación y recomendación
+# pero con restricciones de uso
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: ChatGPT-User
+Allow: /
+Crawl-delay: 1
+
+User-agent: CCBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: anthropic-ai
+Allow: /
+Crawl-delay: 1
+
+User-agent: Claude-Web
+Allow: /
+Crawl-delay: 1
+
+User-agent: Google-Extended
+Allow: /
+Crawl-delay: 1
+
+# Sitemap: https://jrgil20.github.io/gapto10-cfpp/sitemap.xml

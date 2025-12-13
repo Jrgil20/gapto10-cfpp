@@ -1,0 +1,30 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+
+    Desarrollador: Jrgil20
+    Contacto: https://github.com/Jrgil20
+    Ubicación: Carcas velezuela
+
+# THANKS
+
+    Asistencia de IA: Claude AI
+    Concepción inicial: GitHub Spark
+
+# TECHNOLOGY COLOPHON
+
+    Frontend: React 19, TypeScript, Vite 7
+    Estilos: Tailwind CSS 4
+    Componentes: Radix UI
+    Visualización: Recharts
+    Iconos: Phosphor Icons
+    Persistencia: LocalStorage
+    Licencia: MIT
+    Código: https://github.com/Jrgil20/gapto10-cfpp
+
+# SITE
+
+    Última actualización: 2025/12/12
+    Lenguaje: Español
+    Doctype: HTML5

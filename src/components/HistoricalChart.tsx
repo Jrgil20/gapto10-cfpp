@@ -50,7 +50,23 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
     return null
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface TooltipProps {
+    active?: boolean
+    payload?: Array<{
+      payload: {
+        name: string
+        fullDate: string
+        originalNote: number
+        maxPoints: number
+        weight: number
+        section?: 'theory' | 'practice'
+        cumulativePoints: number
+        cumulativePercentage: number
+      }
+    }>
+  }
+
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
