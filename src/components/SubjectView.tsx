@@ -18,7 +18,7 @@ import {
 } from './ui/alert-dialog'
 import { Plus, Calendar, Percent, PencilSimple, Trash, Question } from '@phosphor-icons/react'
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
-import { validateWeights } from '../lib/calculations'
+import { validateWeights, percentageToPoints } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
 
