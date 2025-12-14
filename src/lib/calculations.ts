@@ -294,8 +294,11 @@ export function calculateRequiredNotes(
         // Calcular el porcentaje actual de la evaluación sumativa
         const currentSummativePercentage = calculateSummativePercentage(eval_)
         
-        // Calcular cuánto porcentaje falta para completar la evaluación sumativa
-        const neededFromSummative = Math.max(0, needed - currentSummativePercentage)
+        // Calcular cuánto porcentaje falta obtener de la evaluación sumativa para alcanzar el objetivo
+        // Primero, restamos la contribución actual de la sumativa del porcentaje total actual
+        // Luego, calculamos cuánto porcentaje falta cubrir con la sumativa, relativo a su peso
+        const nonSummativeCurrent = currentPercentage - currentSummativePercentage
+        const neededFromSummative = Math.max(0, (targetPercentage - nonSummativeCurrent) / eval_.weight * 100 - (currentSummativePercentage / eval_.weight * 100))
         
         // El peso total de las sub-evaluaciones pendientes
         const totalPendingSubWeight = pendingSubs.reduce((sum, sub) => sum + sub.weight, 0)
