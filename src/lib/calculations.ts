@@ -219,7 +219,6 @@ export function calculateRequiredNotes(
       if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
         // Para evaluaciones sumativas, calcular notas para cada sub-evaluación pendiente
         const pendingSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints === undefined)
-        const completedSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
         
         // Calcular el porcentaje actual de la evaluación sumativa
         const currentSummativePercentage = calculateSummativePercentage(eval_)
