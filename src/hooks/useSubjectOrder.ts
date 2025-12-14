@@ -38,7 +38,7 @@ export function useSubjectOrder(subjects: Subject[]) {
         console.warn('Error saving subjects order:', error)
       }
     }
-  }, [subjects, order])
+  }, [subjects])
 
   // Reordenar materias
   const reorderSubjects = useCallback((newOrder: string[]) => {
