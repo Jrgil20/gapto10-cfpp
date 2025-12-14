@@ -8,7 +8,7 @@ interface StatusIndicatorProps {
   showTooltip?: boolean
   /** Si es true, usa icono de CheckCircle para aprobado en vez de Check */
   useCircleForApproved?: boolean
-  /** Indica si el rendimiento fue alto (>= 75% evaluado) - afecta el color del check */
+  /** Indica si el rendimiento fue alto (>= 75% evaluado) - reservado para futuras funcionalidades */
   highEvaluatedWeight?: boolean
 }
 
@@ -42,10 +42,8 @@ export function StatusIndicator({
         if (useCircleForApproved) {
           return <CheckCircle size={iconSize} className="text-accent" weight="fill" />
         }
-        // Color basado en si el peso evaluado es alto
-        return highEvaluatedWeight 
-          ? <Check size={iconSize} className="text-accent" weight="bold" />
-          : <Check size={iconSize} className="text-orange" weight="bold" />
+        // Estado aprobado siempre usa color accent (verde) según reglas de diseño
+        return <Check size={iconSize} className="text-accent" weight="bold" />
       
       case 'impossible':
         return <X size={iconSize} className="text-destructive" weight="bold" />
