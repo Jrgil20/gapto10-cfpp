@@ -19,15 +19,11 @@ import { Alert, AlertDescription } from './components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './components/ui/dialog'
 import { ScrollArea } from './components/ui/scroll-area'
 import { calculateRequiredNotes } from './lib/calculations'
+import { normalizeConfig, minimizeConfig, DEFAULT_CONFIG } from './lib/configUtils'
 
 function App() {
   const [subjects, setSubjects] = useLocalStorage<Subject[]>('gapto10-subjects', [])
-  const [config, setConfig] = useLocalStorage<Config>('gapto10-config', {
-    defaultMaxPoints: 20,
-    percentagePerPoint: 5,
-    passingPercentage: 50,
-    showJsonInExportImport: false
-  })
+  const [config, setConfig] = useLocalStorage<Partial<Config> | undefined>('gapto10-config', undefined)
 
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
   const [subjectDialogOpen, setSubjectDialogOpen] = useState(false)
@@ -39,19 +35,14 @@ function App() {
   const [view, setView] = useState<'dashboard' | 'subject'>('dashboard')
   const [exportImportDialogOpen, setExportImportDialogOpen] = useState(false)
   const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export')
-  const [importData, setImportData] = useState<{ subjects: Subject[]; config: Config; exportDate?: string } | undefined>(undefined)
+  const [importData, setImportData] = useState<{ subjects: Subject[]; config?: Partial<Config>; exportDate?: string } | undefined>(undefined)
   const [welcomeShown, setWelcomeShown] = useLocalStorage<boolean>('gapto10-welcome-shown', false)
   const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false)
   const [promptDialogOpen, setPromptDialogOpen] = useState(false)
 
   const subjectsData = subjects || []
-  const configData = config || {
-    defaultMaxPoints: 20,
-    percentagePerPoint: 5,
-    passingPercentage: 50,
-    showJsonInExportImport: false,
-    roundingType: 'standard'
-  }
+  // Normalizar la configuración para asegurar que todos los campos estén definidos
+  const configData = normalizeConfig(config)
 
   const selectedSubject = subjectsData.find(s => s.id === selectedSubjectId)
 
@@ -203,10 +194,21 @@ function App() {
   }
 
   const handleConfirmExport = () => {
-    const data = {
+    // Minimizar la configuración para solo exportar valores que difieren del default
+    const minimizedConfig = minimizeConfig(configData)
+    
+    const data: {
+      subjects: Subject[]
+      config?: Partial<Config>
+      exportDate: string
+    } = {
       subjects: subjectsData,
-      config: configData,
       exportDate: new Date().toISOString()
+    }
+
+    // Solo incluir config si tiene valores que difieren del default
+    if (minimizedConfig) {
+      data.config = minimizedConfig
     }
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -242,10 +244,13 @@ function App() {
             return
           }
 
+          // Normalizar la configuración importada (aplicar defaults a valores faltantes)
+          const importedConfig = normalizeConfig(data.config)
+          
           // Mostrar diálogo de preview
           setImportData({
             subjects: data.subjects,
-            config: data.config || configData,
+            config: importedConfig,
             exportDate: data.exportDate
           })
           setExportImportMode('import')
@@ -266,8 +271,14 @@ function App() {
     if (importData.subjects && Array.isArray(importData.subjects)) {
       setSubjects(importData.subjects)
     }
+    
+    // Minimizar la configuración antes de guardarla (solo guardar diferencias del default)
     if (importData.config) {
-      setConfig(importData.config)
+      const minimizedConfig = minimizeConfig(importData.config)
+      setConfig(minimizedConfig || undefined)
+    } else {
+      // Si no hay config en el import, limpiar la config guardada (usar defaults)
+      setConfig(undefined)
     }
     
     toast.success('Datos importados correctamente')
@@ -313,10 +324,13 @@ Para cada materia determina:
     // Array de materias
   ],
   "config": {
-    "defaultMaxPoints": 20,
-    "percentagePerPoint": 5,
-    "passingPercentage": 50,
-    "showJsonInExportImport": true
+    // Solo incluir campos que difieren del default
+    // Si todos los valores son default, este objeto puede omitirse
+    "defaultMaxPoints": 20,  // Solo si difiere de 20
+    "percentagePerPoint": 5,  // Solo si difiere de 5
+    "passingPercentage": 50,  // Solo si difiere de 50
+    "showJsonInExportImport": true,  // Solo si difiere de false
+    "roundingType": "standard"  // Solo si difiere de "standard"
   },
   "exportDate": "FECHA_ACTUAL_ISO"
 }
@@ -767,7 +781,11 @@ Total: 100% (20 pts.)
           open={configDialogOpen}
           onOpenChange={setConfigDialogOpen}
           config={configData}
-          onSave={(newConfig) => setConfig(newConfig)}
+          onSave={(newConfig) => {
+            // Minimizar la configuración antes de guardarla
+            const minimizedConfig = minimizeConfig(newConfig)
+            setConfig(minimizedConfig || undefined)
+          }}
         />
       )}
 
