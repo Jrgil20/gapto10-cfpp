@@ -18,7 +18,7 @@ import {
 } from './ui/alert-dialog'
 import { Plus, Calendar, Percent, PencilSimple, Trash, Question } from '@phosphor-icons/react'
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
-import { validateWeights, percentageToPoints } from '../lib/calculations'
+import { validateWeights, percentageToPoints, calculateSummativePercentage } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
 
@@ -42,6 +42,7 @@ export function SubjectView({
   onEditEvaluation,
   onDeleteEvaluation,
   onUpdateNote,
+  onAddSubEvaluation,
   calculationMode,
   onCalculationModeChange
 }: SubjectViewProps) {
@@ -269,67 +270,171 @@ export function SubjectView({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground">Nota Obtenida</span>
-                        <Input
-                          type="number"
-                          placeholder={`0-${evaluation.maxPoints}`}
-                          value={evaluation.obtainedPoints ?? ''}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            if (value === '') {
-                              onUpdateNote(evaluation.id, undefined)
-                            } else {
-                              const num = parseFloat(value)
-                              if (num >= 0 && num <= evaluation.maxPoints) {
-                                onUpdateNote(evaluation.id, num)
-                              }
-                            }
-                          }}
-                          className="font-data"
-                          step="0.5"
-                          min="0"
-                          max={evaluation.maxPoints}
-                        />
-                      </div>
-
-                      {evaluation.obtainedPoints === undefined && getRequiredNote(evaluation.id) !== null && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-muted-foreground">Nota Necesaria</span>
-                          <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
-                            <span className="font-data font-semibold text-primary">
-                              {formatNote(getRequiredNote(evaluation.id)!, evaluation.maxPoints)}
-                            </span>
-                          </div>
+                    {evaluation.isSummative && evaluation.subEvaluations && evaluation.subEvaluations.length > 0 ? (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Sub-evaluaciones</span>
+                          {onAddSubEvaluation && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onAddSubEvaluation(evaluation.id)}
+                            >
+                              <Plus size={14} className="mr-1" />
+                              Agregar
+                            </Button>
+                          )}
                         </div>
-                      )}
+                        <div className="flex flex-col gap-2 pl-4 border-l-2 border-muted">
+                          {evaluation.subEvaluations.map((subEval) => (
+                            <div key={subEval.id} className="flex flex-col gap-2 p-2 bg-muted/30 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">{subEval.name || `Sub-evaluación ${evaluation.subEvaluations!.indexOf(subEval) + 1}`}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {subEval.weight.toFixed(2)}%
+                                  </Badge>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => onEditEvaluation(evaluation)}
+                                >
+                                  <PencilSimple size={12} />
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-xs text-muted-foreground">Nota Obtenida</span>
+                                  <Input
+                                    type="number"
+                                    placeholder={`0-${subEval.maxPoints}`}
+                                    value={subEval.obtainedPoints ?? ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value
+                                      if (value === '') {
+                                        onUpdateNote(subEval.id, undefined, evaluation.id)
+                                      } else {
+                                        const num = parseFloat(value)
+                                        if (num >= 0 && num <= subEval.maxPoints) {
+                                          onUpdateNote(subEval.id, num, evaluation.id)
+                                        }
+                                      }
+                                    }}
+                                    className="font-data"
+                                    step="0.5"
+                                    min="0"
+                                    max={subEval.maxPoints}
+                                  />
+                                </div>
+                                {subEval.obtainedPoints === undefined && getRequiredNote(subEval.id) !== null && (
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-xs text-muted-foreground">Nota Necesaria</span>
+                                    <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                                      <span className="font-data font-semibold text-primary">
+                                        {formatNote(getRequiredNote(subEval.id)!, subEval.maxPoints)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {subEval.obtainedPoints !== undefined && (
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-xs text-muted-foreground">Porcentaje</span>
+                                    <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                                      <span className="font-data font-semibold">
+                                        {((subEval.obtainedPoints / subEval.maxPoints) * subEval.weight).toFixed(2)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Mostrar resumen de la evaluación sumativa */}
+                        {evaluation.subEvaluations.some(sub => sub.obtainedPoints !== undefined) && (
+                          <div className="flex flex-col gap-1 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                            <span className="text-xs text-muted-foreground">Total de la actividad sumativa</span>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-semibold">Porcentaje obtenido</span>
+                              <span className="font-data font-semibold text-primary">
+                                {(() => {
+                                  const completedSubs = evaluation.subEvaluations!.filter(sub => sub.obtainedPoints !== undefined)
+                                  if (completedSubs.length === 0) return '0.00%'
+                                  const averagePercentage = completedSubs.reduce((sum, sub) => {
+                                    return sum + ((sub.obtainedPoints! / sub.maxPoints) * 100)
+                                  }, 0) / completedSubs.length
+                                  return ((averagePercentage / 100) * evaluation.weight).toFixed(2) + '%'
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Nota Obtenida</span>
+                          <Input
+                            type="number"
+                            placeholder={`0-${evaluation.maxPoints}`}
+                            value={evaluation.obtainedPoints ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              if (value === '') {
+                                onUpdateNote(evaluation.id, undefined)
+                              } else {
+                                const num = parseFloat(value)
+                                if (num >= 0 && num <= evaluation.maxPoints) {
+                                  onUpdateNote(evaluation.id, num)
+                                }
+                              }
+                            }}
+                            className="font-data"
+                            step="0.5"
+                            min="0"
+                            max={evaluation.maxPoints}
+                          />
+                        </div>
 
-                      {evaluation.obtainedPoints !== undefined && (
-                        <>
+                        {evaluation.obtainedPoints === undefined && getRequiredNote(evaluation.id) !== null && (
                           <div className="flex flex-col gap-1">
-                            <span className="text-xs text-muted-foreground">Porcentaje Obtenido</span>
+                            <span className="text-xs text-muted-foreground">Nota Necesaria</span>
                             <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
-                              <span className="font-data font-semibold">
-                                {((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight).toFixed(2)}%
+                              <span className="font-data font-semibold text-primary">
+                                {formatNote(getRequiredNote(evaluation.id)!, evaluation.maxPoints)}
                               </span>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs text-muted-foreground">Puntos Obtenidos</span>
-                            <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
-                              <span className="font-data font-semibold text-accent">
-                                {percentageToPoints(
-                                  (evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight,
-                                  config.percentagePerPoint,
-                                  config.roundingType
-                                )} pts
-                              </span>
+                        )}
+
+                        {evaluation.obtainedPoints !== undefined && (
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-muted-foreground">Porcentaje Obtenido</span>
+                              <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                                <span className="font-data font-semibold">
+                                  {((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight).toFixed(2)}%
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-muted-foreground">Puntos Obtenidos</span>
+                              <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                                <span className="font-data font-semibold text-accent">
+                                  {percentageToPoints(
+                                    (evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight,
+                                    config.percentagePerPoint,
+                                    config.roundingType
+                                  )} pts
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
