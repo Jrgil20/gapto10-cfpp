@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox'
 import { Alert, AlertDescription } from './ui/alert'
 import { Evaluation, Subject } from '../types'
+import { Plus, Trash } from '@phosphor-icons/react'
 
 interface EvaluationDialogProps {
   open: boolean
@@ -42,12 +43,14 @@ export function EvaluationDialog({
   const [sameWeight, setSameWeight] = useState(true)
   const [multipleEvals, setMultipleEvals] = useState<MultipleEvaluation[]>([])
   const [isExtraPoints, setIsExtraPoints] = useState(false)
+  const [isSummative, setIsSummative] = useState(false)
+  const [subEvaluations, setSubEvaluations] = useState<Omit<Evaluation, 'id'>[]>([])
 
   useEffect(() => {
     if (open) {
       if (evaluation) {
         setName(evaluation.name)
-        setDate(evaluation.date)
+        setDate(evaluation.date || '')
         setWeight(evaluation.weight.toString())
         setMaxPoints(evaluation.maxPoints.toString())
         setSection(evaluation.section)
@@ -56,6 +59,16 @@ export function EvaluationDialog({
         setSameWeight(true)
         setMultipleEvals([])
         setIsExtraPoints(false)
+        setIsSummative(evaluation.isSummative ?? false)
+        setSubEvaluations(evaluation.subEvaluations?.map(sub => ({
+          name: sub.name,
+          date: sub.date,
+          weight: sub.weight,
+          maxPoints: sub.maxPoints,
+          obtainedPoints: sub.obtainedPoints,
+          section: sub.section,
+          isSummative: sub.isSummative
+        })) || [])
       } else {
         setName('')
         setDate('')
@@ -67,6 +80,8 @@ export function EvaluationDialog({
         setSameWeight(true)
         setMultipleEvals([])
         setIsExtraPoints(false)
+        setIsSummative(false)
+        setSubEvaluations([])
       }
     }
   }, [open, evaluation, defaultMaxPoints])
@@ -96,10 +111,44 @@ export function EvaluationDialog({
     }
   }, [weight, sameWeight, isMultiple, evaluation])
 
+  // Si se activa isSummative, desactivar isMultiple
+  useEffect(() => {
+    if (isSummative && isMultiple) {
+      setIsMultiple(false)
+    }
+  }, [isSummative, isMultiple])
+
   const updateMultipleEval = (index: number, field: 'weight' | 'date', value: string) => {
     setMultipleEvals((current) =>
       current.map((eval_, i) => (i === index ? { ...eval_, [field]: value } : eval_))
     )
+  }
+
+  // Calcular el peso proporcional de cada sub-evaluación
+  const calculateSubEvaluationWeight = (index: number) => {
+    if (!isSummative || !weight || subEvaluations.length === 0) return 0
+    const totalWeight = parseFloat(weight) || 0
+    // Repartir el peso equitativamente entre todas las sub-evaluaciones
+    return totalWeight / subEvaluations.length
+  }
+
+  const addSubEvaluation = () => {
+    setSubEvaluations([...subEvaluations, {
+      name: '',
+      maxPoints: parseFloat(maxPoints) || defaultMaxPoints,
+      weight: 0, // Se calculará automáticamente
+      section: subject.hasSplit ? section : undefined
+    }])
+  }
+
+  const removeSubEvaluation = (index: number) => {
+    setSubEvaluations(subEvaluations.filter((_, i) => i !== index))
+  }
+
+  const updateSubEvaluation = (index: number, field: keyof Omit<Evaluation, 'id'>, value: string | number | undefined) => {
+    setSubEvaluations(subEvaluations.map((sub, i) => 
+      i === index ? { ...sub, [field]: value } : sub
+    ))
   }
 
   // Calcular el peso total actual de las evaluaciones existentes
@@ -147,7 +196,8 @@ export function EvaluationDialog({
   const exceedsLimit = finalTotalWeight > maxAllowedWeight
   
   // Validar si se puede guardar (solo si no excede o si son puntos extra)
-  const canSave = !exceedsLimit || isExtraPoints
+  // Si es sumativa, también debe tener al menos una sub-evaluación
+  const canSave = (!exceedsLimit || isExtraPoints) && (!isSummative || subEvaluations.length > 0)
 
   const handleSave = () => {
     if (!name.trim() || !maxPoints) return
@@ -178,7 +228,8 @@ export function EvaluationDialog({
           date: evalDate,
           weight: weightNum,
           maxPoints: maxPointsNum,
-          section: subject.hasSplit ? section : undefined
+          section: subject.hasSplit ? section : undefined,
+          isSummative: isSummative
         })
       }
 
@@ -191,13 +242,37 @@ export function EvaluationDialog({
       const weightNum = parseFloat(weight)
       if (weightNum <= 0) return
 
+      // Si es sumativa, validar que tenga sub-evaluaciones
+      if (isSummative && subEvaluations.length === 0) {
+        return // No permitir guardar sin sub-evaluaciones
+      }
+
+      // Si es sumativa, calcular el peso de cada sub-evaluación y actualizar
+      let finalSubEvaluations: Evaluation[] | undefined = undefined
+      if (isSummative && subEvaluations.length > 0) {
+        const weightPerSub = weightNum / subEvaluations.length
+        const baseTime = Date.now()
+        finalSubEvaluations = subEvaluations.map((sub, index): Evaluation => ({
+          id: `${baseTime}-${index}`,
+          name: sub.name,
+          date: sub.date,
+          weight: weightPerSub,
+          maxPoints: sub.maxPoints,
+          obtainedPoints: sub.obtainedPoints,
+          section: sub.section,
+          isSummative: sub.isSummative
+        }))
+      }
+
       onSave({
         name: name.trim(),
-        date: date || new Date().toISOString().split('T')[0],
+        date: isSummative ? undefined : (date || new Date().toISOString().split('T')[0]),
         weight: weightNum,
         maxPoints: maxPointsNum,
         obtainedPoints: evaluation?.obtainedPoints,
-        section: subject.hasSplit ? section : undefined
+        section: subject.hasSplit ? section : undefined,
+        isSummative: isSummative,
+        subEvaluations: finalSubEvaluations
       })
     }
 
@@ -225,14 +300,26 @@ export function EvaluationDialog({
             />
           </div>
 
+          <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+            <Checkbox
+              id="is-summative"
+              checked={isSummative}
+              onCheckedChange={(checked) => setIsSummative(checked as boolean)}
+            />
+            <Label htmlFor="is-summative" className="cursor-pointer">
+              Actividad sumativa
+            </Label>
+          </div>
+
           {!evaluation && (
             <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
               <Checkbox
                 id="is-multiple"
                 checked={isMultiple}
                 onCheckedChange={(checked) => setIsMultiple(checked as boolean)}
+                disabled={isSummative}
               />
-              <Label htmlFor="is-multiple" className="cursor-pointer">
+              <Label htmlFor="is-multiple" className={`cursor-pointer ${isSummative ? 'opacity-50' : ''}`}>
                 Crear múltiples evaluaciones del mismo tipo
               </Label>
             </div>
@@ -265,7 +352,7 @@ export function EvaluationDialog({
             </div>
           )}
 
-          {!isMultiple && (
+          {!isMultiple && !isSummative && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="eval-date">Fecha</Label>
               <Input
@@ -356,6 +443,75 @@ export function EvaluationDialog({
                   />
                 </div>
               ))}
+            </div>
+          )}
+
+          {isSummative && (
+            <div className="flex flex-col gap-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="font-semibold">Sub-evaluaciones</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addSubEvaluation}
+                >
+                  <Plus size={16} className="mr-1" />
+                  Agregar
+                </Button>
+              </div>
+              {subEvaluations.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Agrega sub-evaluaciones (ej: Pruebas virtuales). El peso de {weight || 0}% se repartirá equitativamente entre todas.
+                </p>
+              )}
+              {subEvaluations.map((sub, index) => {
+                const calculatedWeight = calculateSubEvaluationWeight(index)
+                return (
+                  <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-card">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Sub-evaluación {index + 1}</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => removeSubEvaluation(index)}
+                      >
+                        <Trash size={14} />
+                      </Button>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        placeholder="Nombre (ej: Prueba virtual 1)"
+                        value={sub.name}
+                        onChange={(e) => updateSubEvaluation(index, 'name', e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label className="text-xs">Puntos máximos</Label>
+                          <Input
+                            type="number"
+                            value={sub.maxPoints}
+                            onChange={(e) => updateSubEvaluation(index, 'maxPoints', parseFloat(e.target.value) || defaultMaxPoints)}
+                            min="1"
+                            step="0.5"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label className="text-xs">Peso asignado</Label>
+                          <Input
+                            type="number"
+                            value={calculatedWeight.toFixed(2)}
+                            disabled
+                            className="bg-muted"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
