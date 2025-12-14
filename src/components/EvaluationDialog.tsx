@@ -45,6 +45,8 @@ export function EvaluationDialog({
   const [isExtraPoints, setIsExtraPoints] = useState(false)
   const [isSummative, setIsSummative] = useState(false)
   const [subEvaluations, setSubEvaluations] = useState<Omit<Evaluation, 'id'>[]>([])
+  const [subEvaluationBaseName, setSubEvaluationBaseName] = useState('')
+  const [subEvaluationCount, setSubEvaluationCount] = useState('1')
 
   useEffect(() => {
     if (open) {
@@ -69,6 +71,8 @@ export function EvaluationDialog({
           section: sub.section,
           isSummative: sub.isSummative
         })) || [])
+        setSubEvaluationBaseName('')
+        setSubEvaluationCount('1')
       } else {
         setName('')
         setDate('')
@@ -82,6 +86,8 @@ export function EvaluationDialog({
         setIsExtraPoints(false)
         setIsSummative(false)
         setSubEvaluations([])
+        setSubEvaluationBaseName('')
+        setSubEvaluationCount('1')
       }
     }
   }, [open, evaluation, defaultMaxPoints])
@@ -139,6 +145,26 @@ export function EvaluationDialog({
       weight: 0, // Se calculará automáticamente
       section: subject.hasSplit ? section : undefined
     }])
+  }
+
+  const createMultipleSubEvaluations = () => {
+    const count = parseInt(subEvaluationCount) || 1
+    const baseName = subEvaluationBaseName.trim() || 'Sub-evaluación'
+    const maxPointsNum = parseFloat(maxPoints) || defaultMaxPoints
+    
+    const newSubs: Omit<Evaluation, 'id'>[] = []
+    for (let i = 0; i < count; i++) {
+      newSubs.push({
+        name: count > 1 ? `${baseName} ${i + 1}` : baseName,
+        maxPoints: maxPointsNum,
+        weight: 0, // Se calculará automáticamente al guardar
+        section: subject.hasSplit ? section : undefined
+      })
+    }
+    
+    setSubEvaluations([...subEvaluations, ...newSubs])
+    setSubEvaluationBaseName('')
+    setSubEvaluationCount('1')
   }
 
   const removeSubEvaluation = (index: number) => {
@@ -448,22 +474,103 @@ export function EvaluationDialog({
 
           {isSummative && (
             <div className="flex flex-col gap-4 p-4 border rounded-lg bg-muted/30">
-              <div className="flex items-center justify-between">
-                <Label className="font-semibold">Sub-evaluaciones</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addSubEvaluation}
-                >
-                  <Plus size={16} className="mr-1" />
-                  Agregar
-                </Button>
-              </div>
-              {subEvaluations.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Agrega sub-evaluaciones (ej: Pruebas virtuales). El peso de {weight || 0}% se repartirá equitativamente entre todas.
-                </p>
+              <Label className="font-semibold">Sub-evaluaciones</Label>
+              
+              {subEvaluations.length === 0 ? (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Crea múltiples sub-evaluaciones (ej: Pruebas virtuales). El peso de {weight || 0}% se repartirá equitativamente entre todas.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor="sub-eval-base-name" className="text-xs">Nombre base</Label>
+                        <Input
+                          id="sub-eval-base-name"
+                          placeholder="Ej: Prueba virtual"
+                          value={subEvaluationBaseName}
+                          onChange={(e) => setSubEvaluationBaseName(e.target.value)}
+                        />
+                      </div>
+                      <div className="w-24">
+                        <Label htmlFor="sub-eval-count" className="text-xs">Cantidad</Label>
+                        <Input
+                          id="sub-eval-count"
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={subEvaluationCount}
+                          onChange={(e) => setSubEvaluationCount(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={createMultipleSubEvaluations}
+                      disabled={!subEvaluationBaseName.trim() || parseInt(subEvaluationCount) < 1}
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Crear sub-evaluaciones
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Podrás agregar más sub-evaluaciones después de crear estas.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      El peso de {weight || 0}% se repartirá equitativamente entre todas las sub-evaluaciones.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addSubEvaluation}
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Agregar más
+                    </Button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor="sub-eval-base-name-existing" className="text-xs">Nombre base</Label>
+                        <Input
+                          id="sub-eval-base-name-existing"
+                          placeholder="Ej: Prueba virtual"
+                          value={subEvaluationBaseName}
+                          onChange={(e) => setSubEvaluationBaseName(e.target.value)}
+                        />
+                      </div>
+                      <div className="w-24">
+                        <Label htmlFor="sub-eval-count-existing" className="text-xs">Cantidad</Label>
+                        <Input
+                          id="sub-eval-count-existing"
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={subEvaluationCount}
+                          onChange={(e) => setSubEvaluationCount(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={createMultipleSubEvaluations}
+                          disabled={!subEvaluationBaseName.trim() || parseInt(subEvaluationCount) < 1}
+                        >
+                          <Plus size={14} className="mr-1" />
+                          Crear
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
               {subEvaluations.map((sub, index) => {
                 const calculatedWeight = calculateSubEvaluationWeight(index)
