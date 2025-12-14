@@ -1,7 +1,7 @@
 export interface Evaluation {
   id: string
   name: string
-  date?: string // Opcional cuando isSummative es true
+  date?: string // Optional when isSummative is true
   weight: number
   maxPoints: number
   obtainedPoints?: number
