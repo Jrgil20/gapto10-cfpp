@@ -172,7 +172,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                           100 - evaluatedWeight,
                           config.percentagePerPoint,
                           config.roundingType
-                        ).toFixed(1)}</span> pts
+                        )}</span> pts
                       </span>
                     </div>
                     <StatusIndicator 
