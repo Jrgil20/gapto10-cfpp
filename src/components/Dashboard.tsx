@@ -178,7 +178,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                     <StatusIndicator 
                       statusInfo={statusInfo}
                       size="lg"
-                      highEvaluatedWeight={evaluatedWeight >= 75}
+                      highEvaluatedWeight={evaluatedWeight > 0 ? (calculation.currentPercentage / evaluatedWeight) * 100 >= 75 : false}
                     />
                   </div>
                 </div>
