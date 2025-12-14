@@ -183,7 +183,7 @@ function isEvaluationFullyComplete(evaluation: Evaluation): boolean {
  * Determina si una evaluación está pendiente (no tiene nota o no todas sus sub-evaluaciones tienen nota)
  */
 function isEvaluationPending(evaluation: Evaluation): boolean {
-  return !isEvaluationComplete(evaluation)
+  return !isEvaluationFullyComplete(evaluation)
 }
 
 export function calculateRequiredNotes(
@@ -195,7 +195,7 @@ export function calculateRequiredNotes(
   const roundingType = config.roundingType || 'standard'
 
   const pendingEvaluations = evaluations.filter(isEvaluationPending)
-  const completedEvaluations = evaluations.filter(isEvaluationComplete)
+  const completedEvaluations = evaluations.filter(isEvaluationFullyComplete)
 
   if (hasSplit && theoryWeight && practiceWeight) {
     // Usar todas las evaluaciones para calcular el porcentaje actual (no solo las completas)
