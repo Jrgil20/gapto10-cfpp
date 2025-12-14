@@ -17,6 +17,12 @@ export interface Subject {
   evaluations: Evaluation[]
 }
 
+/**
+ * Tipo de redondeo para cálculos de puntos.
+ * - 'standard': Redondeo estándar (Math.round) - redondea al entero más cercano
+ * - 'floor': Redondeo hacia abajo (Math.floor) - siempre redondea hacia abajo
+ * - 'ceil': Redondeo hacia arriba (Math.ceil) - siempre redondea hacia arriba
+ */
 export type RoundingType = 'standard' | 'floor' | 'ceil'
 
 export interface Config {
@@ -24,6 +30,11 @@ export interface Config {
   percentagePerPoint: number
   passingPercentage: number
   showJsonInExportImport?: boolean
+  /**
+   * Tipo de redondeo a aplicar en los cálculos de conversión de porcentaje a puntos.
+   * Afecta el comportamiento de cálculos críticos en toda la aplicación.
+   * @default 'standard'
+   */
   roundingType?: RoundingType
 }
 
