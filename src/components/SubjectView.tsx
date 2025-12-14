@@ -315,21 +315,11 @@ export function SubjectView({
                         <div className="flex flex-col gap-2 pl-4 border-l-2 border-muted">
                           {evaluation.subEvaluations.map((subEval) => (
                             <div key={subEval.id} className="flex flex-col gap-2 p-2 bg-muted/30 rounded-lg">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{subEval.name || `Sub-evaluación ${evaluation.subEvaluations!.indexOf(subEval) + 1}`}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {subEval.weight.toFixed(2)}%
-                                  </Badge>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => onEditEvaluation(evaluation)}
-                                >
-                                  <PencilSimple size={12} />
-                                </Button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{subEval.name || `Sub-evaluación ${evaluation.subEvaluations!.indexOf(subEval) + 1}`}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {subEval.weight.toFixed(2)}%
+                                </Badge>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div className="flex flex-col gap-1">
