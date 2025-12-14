@@ -122,6 +122,30 @@ export function calculateProgressMetrics(params: ProgressParams) {
   }
 }
 
+/**
+ * Calcula el porcentaje obtenido de una evaluación sumativa basado en sus sub-evaluaciones
+ */
+function calculateSummativePercentage(evaluation: Evaluation): number {
+  if (!evaluation.isSummative || !evaluation.subEvaluations || evaluation.subEvaluations.length === 0) {
+    return 0
+  }
+
+  // Calcular el promedio de las sub-evaluaciones completadas
+  const completedSubs = evaluation.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+  if (completedSubs.length === 0) {
+    return 0
+  }
+
+  // Calcular el promedio de porcentajes obtenidos en las sub-evaluaciones
+  const averagePercentage = completedSubs.reduce((sum, sub) => {
+    const subPercentage = (sub.obtainedPoints! / sub.maxPoints) * 100
+    return sum + subPercentage
+  }, 0) / completedSubs.length
+
+  // Aplicar el peso de la evaluación sumativa
+  return (averagePercentage / 100) * evaluation.weight
+}
+
 export function calculateCurrentPercentage(
   evaluations: Evaluation[],
   section?: 'theory' | 'practice'
@@ -131,7 +155,11 @@ export function calculateCurrentPercentage(
     : evaluations
 
   const totalObtained = filteredEvals.reduce((sum, eval_) => {
-    if (eval_.obtainedPoints !== undefined) {
+    if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, calcular basado en sub-evaluaciones
+      return sum + calculateSummativePercentage(eval_)
+    } else if (eval_.obtainedPoints !== undefined) {
+      // Para evaluaciones normales
       const percentage = (eval_.obtainedPoints / eval_.maxPoints) * eval_.weight
       return sum + percentage
     }
@@ -139,6 +167,25 @@ export function calculateCurrentPercentage(
   }, 0)
 
   return totalObtained
+}
+
+/**
+ * Determina si una evaluación está completa (tiene nota o todas sus sub-evaluaciones tienen nota)
+ */
+function isEvaluationComplete(evaluation: Evaluation): boolean {
+  if (evaluation.isSummative && evaluation.subEvaluations && evaluation.subEvaluations.length > 0) {
+    // Una evaluación sumativa está completa si todas sus sub-evaluaciones tienen nota
+    return evaluation.subEvaluations.every(sub => sub.obtainedPoints !== undefined)
+  }
+  // Una evaluación normal está completa si tiene nota
+  return evaluation.obtainedPoints !== undefined
+}
+
+/**
+ * Determina si una evaluación está pendiente (no tiene nota o no todas sus sub-evaluaciones tienen nota)
+ */
+function isEvaluationPending(evaluation: Evaluation): boolean {
+  return !isEvaluationComplete(evaluation)
 }
 
 export function calculateRequiredNotes(
@@ -149,8 +196,8 @@ export function calculateRequiredNotes(
   const { evaluations, hasSplit, theoryWeight, practiceWeight } = subject
   const roundingType = config.roundingType || 'standard'
 
-  const pendingEvaluations = evaluations.filter(e => e.obtainedPoints === undefined)
-  const completedEvaluations = evaluations.filter(e => e.obtainedPoints !== undefined)
+  const pendingEvaluations = evaluations.filter(isEvaluationPending)
+  const completedEvaluations = evaluations.filter(isEvaluationComplete)
 
   if (hasSplit && theoryWeight && practiceWeight) {
     const currentTheoryPercentage = calculateCurrentPercentage(completedEvaluations, 'theory')
@@ -165,19 +212,62 @@ export function calculateRequiredNotes(
     const pendingTheory = pendingEvaluations.filter(e => e.section === 'theory')
     const pendingPractice = pendingEvaluations.filter(e => e.section === 'practice')
     
-    const requiredNotes = pendingEvaluations.map(eval_ => {
-      const isTheory = eval_.section === 'theory'
-      const needed = isTheory ? theoryNeeded : practiceNeeded
-      const pending = isTheory ? pendingTheory : pendingPractice
-      const completed = completedEvaluations.filter(e => e.section === eval_.section)
-      
-      return {
-        evaluationId: eval_.id,
-        pessimistic: calculatePessimisticNote(eval_, needed, pending, roundingType),
-        normal: calculateNormalNote(eval_, completed, needed, pending, roundingType),
-        optimistic: calculateOptimisticNote(eval_, needed, pending, targetPercentage, roundingType)
+    // Para evaluaciones sumativas, necesitamos calcular notas para las sub-evaluaciones pendientes
+    const requiredNotes: { evaluationId: string; pessimistic: number; normal: number; optimistic: number }[] = []
+    
+    for (const eval_ of pendingEvaluations) {
+      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+        // Para evaluaciones sumativas, calcular notas para cada sub-evaluación pendiente
+        const pendingSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints === undefined)
+        const completedSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+        
+        // Calcular el porcentaje actual de la evaluación sumativa
+        const currentSummativePercentage = calculateSummativePercentage(eval_)
+        const isTheory = eval_.section === 'theory'
+        const needed = isTheory ? theoryNeeded : practiceNeeded
+        const pending = isTheory ? pendingTheory : pendingPractice
+        
+        // Calcular cuánto porcentaje falta para completar la evaluación sumativa
+        // El porcentaje que falta es la diferencia entre lo necesario y lo obtenido
+        const neededFromSummative = Math.max(0, needed - currentSummativePercentage)
+        
+        // El peso total de las sub-evaluaciones pendientes
+        const totalPendingSubWeight = pendingSubs.reduce((sum, sub) => sum + sub.weight, 0)
+        
+        // Para cada sub-evaluación pendiente, calcular la nota necesaria
+        // El porcentaje necesario se distribuye proporcionalmente al peso de cada sub-evaluación
+        for (const subEval of pendingSubs) {
+          // Calcular el porcentaje necesario para esta sub-evaluación
+          const subNeeded = totalPendingSubWeight > 0 
+            ? (neededFromSummative * subEval.weight) / totalPendingSubWeight
+            : neededFromSummative / pendingSubs.length
+          
+          // Usar todas las evaluaciones pendientes (incluyendo otras sumativas) para el cálculo
+          const subPending = pending
+          const subCompleted = completedEvaluations.filter(e => e.section === eval_.section)
+          
+          requiredNotes.push({
+            evaluationId: subEval.id,
+            pessimistic: calculatePessimisticNote(subEval, subNeeded, subPending, roundingType),
+            normal: calculateNormalNote(subEval, subCompleted, subNeeded, subPending, roundingType),
+            optimistic: calculateOptimisticNote(subEval, subNeeded, subPending, targetPercentage, roundingType)
+          })
+        }
+      } else {
+        // Para evaluaciones normales
+        const isTheory = eval_.section === 'theory'
+        const needed = isTheory ? theoryNeeded : practiceNeeded
+        const pending = isTheory ? pendingTheory : pendingPractice
+        const completed = completedEvaluations.filter(e => e.section === eval_.section)
+        
+        requiredNotes.push({
+          evaluationId: eval_.id,
+          pessimistic: calculatePessimisticNote(eval_, needed, pending, roundingType),
+          normal: calculateNormalNote(eval_, completed, needed, pending, roundingType),
+          optimistic: calculateOptimisticNote(eval_, needed, pending, targetPercentage, roundingType)
+        })
       }
-    })
+    }
     
     return {
       currentPercentage: currentTheoryPercentage + currentPracticePercentage,
@@ -192,12 +282,49 @@ export function calculateRequiredNotes(
     const currentPercentage = calculateCurrentPercentage(completedEvaluations)
     const needed = Math.max(0, targetPercentage - currentPercentage)
     
-    const requiredNotes = pendingEvaluations.map(eval_ => ({
-      evaluationId: eval_.id,
-      pessimistic: calculatePessimisticNote(eval_, needed, pendingEvaluations, roundingType),
-      normal: calculateNormalNote(eval_, completedEvaluations, needed, pendingEvaluations, roundingType),
-      optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations, targetPercentage, roundingType)
-    }))
+    // Para evaluaciones sumativas, necesitamos calcular notas para las sub-evaluaciones pendientes
+    const requiredNotes: { evaluationId: string; pessimistic: number; normal: number; optimistic: number }[] = []
+    
+    for (const eval_ of pendingEvaluations) {
+      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+        // Para evaluaciones sumativas, calcular notas para cada sub-evaluación pendiente
+        const pendingSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints === undefined)
+        const completedSubs = eval_.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+        
+        // Calcular el porcentaje actual de la evaluación sumativa
+        const currentSummativePercentage = calculateSummativePercentage(eval_)
+        
+        // Calcular cuánto porcentaje falta para completar la evaluación sumativa
+        const neededFromSummative = Math.max(0, needed - currentSummativePercentage)
+        
+        // El peso total de las sub-evaluaciones pendientes
+        const totalPendingSubWeight = pendingSubs.reduce((sum, sub) => sum + sub.weight, 0)
+        
+        // Para cada sub-evaluación pendiente, calcular la nota necesaria
+        // El porcentaje necesario se distribuye proporcionalmente al peso de cada sub-evaluación
+        for (const subEval of pendingSubs) {
+          // Calcular el porcentaje necesario para esta sub-evaluación
+          const subNeeded = totalPendingSubWeight > 0 
+            ? (neededFromSummative * subEval.weight) / totalPendingSubWeight
+            : neededFromSummative / pendingSubs.length
+          
+          requiredNotes.push({
+            evaluationId: subEval.id,
+            pessimistic: calculatePessimisticNote(subEval, subNeeded, pendingEvaluations, roundingType),
+            normal: calculateNormalNote(subEval, completedEvaluations, subNeeded, pendingEvaluations, roundingType),
+            optimistic: calculateOptimisticNote(subEval, subNeeded, pendingEvaluations, targetPercentage, roundingType)
+          })
+        }
+      } else {
+        // Para evaluaciones normales
+        requiredNotes.push({
+          evaluationId: eval_.id,
+          pessimistic: calculatePessimisticNote(eval_, needed, pendingEvaluations, roundingType),
+          normal: calculateNormalNote(eval_, completedEvaluations, needed, pendingEvaluations, roundingType),
+          optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations, targetPercentage, roundingType)
+        })
+      }
+    }
     
     return {
       currentPercentage,
@@ -320,6 +447,7 @@ export function validateWeights(subject: Subject): { isValid: boolean; message?:
     const theoryEvals = subject.evaluations.filter(e => e.section === 'theory')
     const practiceEvals = subject.evaluations.filter(e => e.section === 'practice')
     
+    // Solo contar el peso de las evaluaciones principales (las sub-evaluaciones ya están incluidas en el peso de la sumativa)
     const theorySum = theoryEvals.reduce((sum, e) => sum + e.weight, 0)
     const practiceSum = practiceEvals.reduce((sum, e) => sum + e.weight, 0)
     
@@ -331,6 +459,7 @@ export function validateWeights(subject: Subject): { isValid: boolean; message?:
       return { isValid: false, message: `Las evaluaciones de práctica deben sumar ${subject.practiceWeight}%` }
     }
   } else {
+    // Solo contar el peso de las evaluaciones principales (las sub-evaluaciones ya están incluidas en el peso de la sumativa)
     const totalWeight = subject.evaluations.reduce((sum, e) => sum + e.weight, 0)
     
     if (totalWeight !== 100 && subject.evaluations.length > 0) {
