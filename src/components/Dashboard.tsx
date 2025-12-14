@@ -3,7 +3,7 @@ import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Plus } from '@phosphor-icons/react'
-import { calculateRequiredNotes, getProgressStatus } from '../lib/calculations'
+import { calculateRequiredNotes, getProgressStatus, percentageToPoints } from '../lib/calculations'
 import { ProgressBar } from './ProgressBar'
 import { StatusIndicator } from './StatusIndicator'
 
@@ -123,8 +123,16 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             })
           }
 
-          const currentPoints = (calculation.currentPercentage / config.percentagePerPoint).toFixed(1)
-          const totalPoints = (100 / config.percentagePerPoint).toFixed(0)
+          const currentPoints = percentageToPoints(
+            calculation.currentPercentage,
+            config.percentagePerPoint,
+            config.roundingType
+          ).toFixed(1)
+          const totalPoints = percentageToPoints(
+            100,
+            config.percentagePerPoint,
+            config.roundingType
+          ).toFixed(0)
 
           return (
             <Card 
@@ -160,7 +168,11 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
                         <span className="text-muted-foreground text-xs sm:text-sm">/ {totalPoints} pts</span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts
+                        Por evaluar: <span className="font-data font-medium">{percentageToPoints(
+                          100 - evaluatedWeight,
+                          config.percentagePerPoint,
+                          config.roundingType
+                        ).toFixed(1)}</span> pts
                       </span>
                     </div>
                     <StatusIndicator 

@@ -4,7 +4,8 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Checkbox } from './ui/checkbox'
-import { Config } from '../types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Config, RoundingType } from '../types'
 
 interface ConfigDialogProps {
   open: boolean
@@ -18,6 +19,7 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
   const [percentagePerPoint, setPercentagePerPoint] = useState(config.percentagePerPoint.toString())
   const [passingPercentage, setPassingPercentage] = useState(config.passingPercentage.toString())
   const [showJsonInExportImport, setShowJsonInExportImport] = useState(config.showJsonInExportImport ?? false)
+  const [roundingType, setRoundingType] = useState<RoundingType>(config.roundingType || 'standard')
 
   // Actualizar estado cuando cambia el config
   useEffect(() => {
@@ -25,6 +27,7 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
     setPercentagePerPoint(config.percentagePerPoint.toString())
     setPassingPercentage(config.passingPercentage.toString())
     setShowJsonInExportImport(config.showJsonInExportImport ?? false)
+    setRoundingType(config.roundingType || 'standard')
   }, [config])
 
   const handleSave = () => {
@@ -37,7 +40,8 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
         defaultMaxPoints: maxPoints,
         percentagePerPoint: perPoint,
         passingPercentage: passing,
-        showJsonInExportImport
+        showJsonInExportImport,
+        roundingType
       })
       onOpenChange(false)
     }
@@ -97,6 +101,23 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
             />
             <p className="text-xs text-muted-foreground">
               Porcentaje mínimo requerido para aprobar una materia
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="rounding-type">Tipo de redondeo</Label>
+            <Select value={roundingType} onValueChange={(value) => setRoundingType(value as RoundingType)}>
+              <SelectTrigger id="rounding-type">
+                <SelectValue placeholder="Selecciona el tipo de redondeo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Estándar (redondeo normal)</SelectItem>
+                <SelectItem value="floor">Piso (redondeo hacia abajo)</SelectItem>
+                <SelectItem value="ceil">Techo (redondeo hacia arriba)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Método de redondeo para cálculos de notas finales. Algunas universidades requieren piso o techo en lugar de redondeo estándar.
             </p>
           </div>
 

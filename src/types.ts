@@ -17,11 +17,14 @@ export interface Subject {
   evaluations: Evaluation[]
 }
 
+export type RoundingType = 'standard' | 'floor' | 'ceil'
+
 export interface Config {
   defaultMaxPoints: number
   percentagePerPoint: number
   passingPercentage: number
   showJsonInExportImport?: boolean
+  roundingType?: RoundingType
 }
 
 export interface CalculationResult {

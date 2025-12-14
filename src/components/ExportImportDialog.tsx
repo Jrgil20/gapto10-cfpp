@@ -129,7 +129,7 @@ export function ExportImportDialog({
             <Card className="p-4">
               <div className="flex flex-col gap-3">
                 <h3 className="font-semibold text-sm">Configuración</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                   <div className="flex flex-col gap-1">
                     <span className="text-muted-foreground">Puntos máximos</span>
                     <span className="font-semibold">{dataToShow.config.defaultMaxPoints}</span>
@@ -141,6 +141,13 @@ export function ExportImportDialog({
                   <div className="flex flex-col gap-1">
                     <span className="text-muted-foreground">% para aprobar</span>
                     <span className="font-semibold">{dataToShow.config.passingPercentage}%</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground">Redondeo</span>
+                    <span className="font-semibold">
+                      {dataToShow.config.roundingType === 'floor' ? 'Piso' : 
+                       dataToShow.config.roundingType === 'ceil' ? 'Techo' : 'Estándar'}
+                    </span>
                   </div>
                 </div>
               </div>
