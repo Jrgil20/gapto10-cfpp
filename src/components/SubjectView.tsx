@@ -61,17 +61,44 @@ export function SubjectView({
     return `${points.toFixed(1)}/${maxPoints}`
   }
 
-  const evaluatedWeight = subject.evaluations
-    .filter(e => e.obtainedPoints !== undefined)
-    .reduce((sum, e) => sum + e.weight, 0)
+  // Calcular el peso evaluado considerando sub-evaluaciones
+  const evaluatedWeight = subject.evaluations.reduce((sum, e) => {
+    if (e.isSummative && e.subEvaluations && e.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, sumar el peso de las sub-evaluaciones completadas
+      const completedSubs = e.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+      return sum + completedSubs.reduce((subSum, sub) => subSum + sub.weight, 0)
+    } else if (e.obtainedPoints !== undefined) {
+      // Para evaluaciones normales, sumar el peso completo
+      return sum + e.weight
+    }
+    return sum
+  }, 0)
 
-  const evaluatedTheoryWeight = subject.evaluations
-    .filter(e => e.obtainedPoints !== undefined && e.section === 'theory')
-    .reduce((sum, e) => sum + e.weight, 0)
+  const evaluatedTheoryWeight = subject.evaluations.reduce((sum, e) => {
+    if (e.section !== 'theory') return sum
+    if (e.isSummative && e.subEvaluations && e.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, sumar el peso de las sub-evaluaciones completadas
+      const completedSubs = e.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+      return sum + completedSubs.reduce((subSum, sub) => subSum + sub.weight, 0)
+    } else if (e.obtainedPoints !== undefined) {
+      // Para evaluaciones normales, sumar el peso completo
+      return sum + e.weight
+    }
+    return sum
+  }, 0)
 
-  const evaluatedPracticeWeight = subject.evaluations
-    .filter(e => e.obtainedPoints !== undefined && e.section === 'practice')
-    .reduce((sum, e) => sum + e.weight, 0)
+  const evaluatedPracticeWeight = subject.evaluations.reduce((sum, e) => {
+    if (e.section !== 'practice') return sum
+    if (e.isSummative && e.subEvaluations && e.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, sumar el peso de las sub-evaluaciones completadas
+      const completedSubs = e.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
+      return sum + completedSubs.reduce((subSum, sub) => subSum + sub.weight, 0)
+    } else if (e.obtainedPoints !== undefined) {
+      // Para evaluaciones normales, sumar el peso completo
+      return sum + e.weight
+    }
+    return sum
+  }, 0)
 
   const hasCompletedEvaluations = subject.evaluations.some(
     e => e.obtainedPoints !== undefined && e.date
