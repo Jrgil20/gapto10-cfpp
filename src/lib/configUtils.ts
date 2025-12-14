@@ -1,4 +1,4 @@
-import { Config, RoundingType } from '../types'
+import { Config } from '../types'
 
 /**
  * Configuración por defecto del sistema.
