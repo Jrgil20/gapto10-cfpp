@@ -98,7 +98,27 @@ export function ProgressVisualization({
     })
   }
 
-  const completedEvaluations = subject.evaluations.filter(e => e.obtainedPoints !== undefined).length
+  // Contar evaluaciones completadas (incluyendo sub-evaluaciones)
+  const completedEvaluations = subject.evaluations.reduce((count, e) => {
+    if (e.isSummative && e.subEvaluations && e.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, contar sub-evaluaciones completadas
+      return count + e.subEvaluations.filter(sub => sub.obtainedPoints !== undefined).length
+    } else if (e.obtainedPoints !== undefined) {
+      // Para evaluaciones normales, contar como 1
+      return count + 1
+    }
+    return count
+  }, 0)
+  
+  // Contar total de evaluaciones (incluyendo sub-evaluaciones)
+  const totalEvaluations = subject.evaluations.reduce((count, e) => {
+    if (e.isSummative && e.subEvaluations && e.subEvaluations.length > 0) {
+      // Para evaluaciones sumativas, contar todas las sub-evaluaciones
+      return count + e.subEvaluations.length
+    }
+    // Para evaluaciones normales, contar como 1
+    return count + 1
+  }, 0)
 
   return (
     <Card className="p-4 sm:p-6">
@@ -108,7 +128,7 @@ export function ProgressVisualization({
           <div className="flex flex-col gap-1">
             <h2 className="text-base sm:text-lg font-semibold">Nota Acumulada</h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              {subject.evaluations.length} evaluaciones • {completedEvaluations} completadas
+              {totalEvaluations} evaluaciones • {completedEvaluations} completadas
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">

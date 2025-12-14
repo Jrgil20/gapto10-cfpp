@@ -198,8 +198,10 @@ export function calculateRequiredNotes(
   const completedEvaluations = evaluations.filter(isEvaluationComplete)
 
   if (hasSplit && theoryWeight && practiceWeight) {
-    const currentTheoryPercentage = calculateCurrentPercentage(completedEvaluations, 'theory')
-    const currentPracticePercentage = calculateCurrentPercentage(completedEvaluations, 'practice')
+    // Usar todas las evaluaciones para calcular el porcentaje actual (no solo las completas)
+    // calculateCurrentPercentage ya maneja correctamente las evaluaciones parcialmente completadas
+    const currentTheoryPercentage = calculateCurrentPercentage(evaluations, 'theory')
+    const currentPracticePercentage = calculateCurrentPercentage(evaluations, 'practice')
     
     const theoryTarget = (theoryWeight * config.passingPercentage) / 100
     const practiceTarget = (practiceWeight * config.passingPercentage) / 100
@@ -277,7 +279,9 @@ export function calculateRequiredNotes(
       requiredNotes
     }
   } else {
-    const currentPercentage = calculateCurrentPercentage(completedEvaluations)
+    // Usar todas las evaluaciones para calcular el porcentaje actual (no solo las completas)
+    // calculateCurrentPercentage ya maneja correctamente las evaluaciones parcialmente completadas
+    const currentPercentage = calculateCurrentPercentage(evaluations)
     const needed = Math.max(0, targetPercentage - currentPercentage)
     
     // Para evaluaciones sumativas, necesitamos calcular notas para las sub-evaluaciones pendientes

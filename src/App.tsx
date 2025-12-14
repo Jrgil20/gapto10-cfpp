@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { Subject, Evaluation, Config, CalculationMode } from './types'
 import { SubjectDialog } from './components/SubjectDialog'
@@ -341,9 +341,14 @@ function App() {
     setImportData(undefined)
   }
 
-  const calculation = selectedSubject && configData
-    ? calculateRequiredNotes(selectedSubject, configData)
-    : null
+  // Recalcular cuando cambia subjectsData, selectedSubjectId o configData
+  const calculation = useMemo(() => {
+    const subject = subjectsData.find(s => s.id === selectedSubjectId)
+    if (subject && configData) {
+      return calculateRequiredNotes(subject, configData)
+    }
+    return null
+  }, [subjectsData, selectedSubjectId, configData])
 
   // Mostrar diálogo de bienvenida solo la primera vez y si no hay datos
   useEffect(() => {
