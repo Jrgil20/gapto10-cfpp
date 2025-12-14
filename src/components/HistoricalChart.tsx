@@ -4,6 +4,7 @@ import { Card } from './ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { percentageToPoints } from '../lib/calculations'
 
 interface HistoricalChartProps {
   subject: Subject
@@ -28,8 +29,12 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
       const obtainedPercentage = (evaluation.obtainedPoints! / evaluation.maxPoints) * evaluation.weight
       cumulativePercentage += obtainedPercentage
       
-      // Convertir acumulado a puntos (escala de 20)
-      const cumulativePoints = cumulativePercentage / config.percentagePerPoint
+      // Convertir acumulado a puntos aplicando el tipo de redondeo configurado
+      const cumulativePoints = percentageToPoints(
+        cumulativePercentage,
+        config.percentagePerPoint,
+        config.roundingType
+      )
 
       return {
         date: format(new Date(evaluation.date), 'dd MMM', { locale: es }),
@@ -44,7 +49,7 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
         cumulativePercentage: Number(cumulativePercentage.toFixed(2))
       }
     })
-  }, [subject.evaluations, config.percentagePerPoint])
+  }, [subject.evaluations, config.percentagePerPoint, config.roundingType])
 
   if (chartData.length === 0) {
     return null

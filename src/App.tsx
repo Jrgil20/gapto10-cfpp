@@ -49,7 +49,8 @@ function App() {
     defaultMaxPoints: 20,
     percentagePerPoint: 5,
     passingPercentage: 50,
-    showJsonInExportImport: false
+    showJsonInExportImport: false,
+    roundingType: 'standard'
   }
 
   const selectedSubject = subjectsData.find(s => s.id === selectedSubjectId)
