@@ -391,7 +391,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
           <DashboardSortControls 
             sortMode={sortMode} 
             onSortModeChange={setSortMode}
-            isDragging={sortMode === 'manual'}
+            isManualMode={sortMode === 'manual'}
           />
           <Button onClick={onAddSubject} className="w-full sm:w-auto">
             <Plus className="mr-2" />
