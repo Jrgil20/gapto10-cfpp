@@ -3,7 +3,7 @@ import { Card } from './ui/card'
 import { Target } from '@phosphor-icons/react'
 import { ProgressBar } from './ProgressBar'
 import { StatusIndicator } from './StatusIndicator'
-import { getProgressStatus } from '../lib/calculations'
+import { getProgressStatus, percentageToPoints } from '../lib/calculations'
 
 interface ProgressVisualizationProps {
   subject: Subject
@@ -120,7 +120,11 @@ export function ProgressVisualization({
                 <span className="text-xs sm:text-base text-muted-foreground">/ {totalPoints} pts</span>
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
-                Por evaluar: <span className="font-data font-medium">{((100 - evaluatedWeight) / config.percentagePerPoint).toFixed(1)}</span> pts
+                Por evaluar: <span className="font-data font-medium">{percentageToPoints(
+                  100 - evaluatedWeight,
+                  config.percentagePerPoint,
+                  config.roundingType
+                ).toFixed(1)}</span> pts
               </span>
             </div>
             <StatusIndicator 

@@ -314,7 +314,11 @@ export function SubjectView({
                             <span className="text-xs text-muted-foreground">Puntos Obtenidos</span>
                             <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
                               <span className="font-data font-semibold text-accent">
-                                {(((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight) / config.percentagePerPoint).toFixed(2)} pts
+                                {percentageToPoints(
+                                  (evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight,
+                                  config.percentagePerPoint,
+                                  config.roundingType
+                                ).toFixed(2)} pts
                               </span>
                             </div>
                           </div>

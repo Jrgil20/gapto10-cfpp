@@ -1,4 +1,39 @@
-import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus } from '../types'
+import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus, RoundingType } from '../types'
+
+/**
+ * Aplica el tipo de redondeo configurado a un valor numérico.
+ * @param value - Valor a redondear
+ * @param roundingType - Tipo de redondeo: 'standard' (Math.round), 'floor' (Math.floor), 'ceil' (Math.ceil)
+ * @returns Valor redondeado según el tipo especificado
+ */
+export function applyRounding(value: number, roundingType: RoundingType = 'standard'): number {
+  switch (roundingType) {
+    case 'floor':
+      return Math.floor(value)
+    case 'ceil':
+      return Math.ceil(value)
+    case 'standard':
+    default:
+      return Math.round(value)
+  }
+}
+
+/**
+ * Convierte un porcentaje a puntos usando el porcentaje por punto configurado,
+ * aplicando el tipo de redondeo especificado.
+ * @param percentage - Porcentaje a convertir
+ * @param percentagePerPoint - Porcentaje que representa un punto
+ * @param roundingType - Tipo de redondeo a aplicar
+ * @returns Puntos calculados con el redondeo aplicado
+ */
+export function percentageToPoints(
+  percentage: number,
+  percentagePerPoint: number,
+  roundingType: RoundingType = 'standard'
+): number {
+  const points = percentage / percentagePerPoint
+  return applyRounding(points, roundingType)
+}
 
 /**
  * Calcula el estado de progreso basado en los parámetros dados.
@@ -112,6 +147,7 @@ export function calculateRequiredNotes(
   targetPercentage: number = config.passingPercentage
 ): CalculationResult {
   const { evaluations, hasSplit, theoryWeight, practiceWeight } = subject
+  const roundingType = config.roundingType || 'standard'
 
   const pendingEvaluations = evaluations.filter(e => e.obtainedPoints === undefined)
   const completedEvaluations = evaluations.filter(e => e.obtainedPoints !== undefined)
@@ -137,9 +173,9 @@ export function calculateRequiredNotes(
       
       return {
         evaluationId: eval_.id,
-        pessimistic: calculatePessimisticNote(eval_, needed, pending),
-        normal: calculateNormalNote(eval_, completed, needed, pending),
-        optimistic: calculateOptimisticNote(eval_, needed, pending, targetPercentage)
+        pessimistic: calculatePessimisticNote(eval_, needed, pending, roundingType),
+        normal: calculateNormalNote(eval_, completed, needed, pending, roundingType),
+        optimistic: calculateOptimisticNote(eval_, needed, pending, targetPercentage, roundingType)
       }
     })
     
@@ -158,9 +194,9 @@ export function calculateRequiredNotes(
     
     const requiredNotes = pendingEvaluations.map(eval_ => ({
       evaluationId: eval_.id,
-      pessimistic: calculatePessimisticNote(eval_, needed, pendingEvaluations),
-      normal: calculateNormalNote(eval_, completedEvaluations, needed, pendingEvaluations),
-      optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations, targetPercentage)
+      pessimistic: calculatePessimisticNote(eval_, needed, pendingEvaluations, roundingType),
+      normal: calculateNormalNote(eval_, completedEvaluations, needed, pendingEvaluations, roundingType),
+      optimistic: calculateOptimisticNote(eval_, needed, pendingEvaluations, targetPercentage, roundingType)
     }))
     
     return {
@@ -174,7 +210,8 @@ export function calculateRequiredNotes(
 function calculatePessimisticNote(
   evaluation: Evaluation,
   neededPercentage: number,
-  pendingEvaluations: Evaluation[]
+  pendingEvaluations: Evaluation[],
+  roundingType: RoundingType = 'standard'
 ): number {
   if (pendingEvaluations.length === 0) return 0
   
@@ -192,14 +229,17 @@ function calculatePessimisticNote(
   
   const requiredPointsPercentage = percentageContribution / evaluation.weight
   
-  return Math.min(evaluation.maxPoints, Math.max(0, requiredPointsPercentage * evaluation.maxPoints))
+  const calculatedPoints = Math.min(evaluation.maxPoints, Math.max(0, requiredPointsPercentage * evaluation.maxPoints))
+  
+  return applyRounding(calculatedPoints, roundingType)
 }
 
 function calculateNormalNote(
   evaluation: Evaluation,
   completedEvaluations: Evaluation[],
   neededPercentage: number,
-  pendingEvaluations: Evaluation[]
+  pendingEvaluations: Evaluation[],
+  roundingType: RoundingType = 'standard'
 ): number {
   if (pendingEvaluations.length === 0) return 0
   
@@ -233,14 +273,17 @@ function calculateNormalNote(
   const percentageForThisEval = (neededPercentage * weightRatio) * balanceFactor
   const requiredPercentage = Math.max(targetPercentageForEval, percentageForThisEval / evaluation.weight)
   
-  return Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+  const calculatedPoints = Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+  
+  return applyRounding(calculatedPoints, roundingType)
 }
 
 function calculateOptimisticNote(
   evaluation: Evaluation,
   neededPercentage: number,
   pendingEvaluations: Evaluation[],
-  targetPercentage: number
+  targetPercentage: number,
+  roundingType: RoundingType = 'standard'
 ): number {
   if (pendingEvaluations.length === 0) return 0
   
@@ -259,8 +302,9 @@ function calculateOptimisticNote(
   const aspirationalNote = targetNotePercentage * evaluation.maxPoints
   
   const calculatedNote = Math.min(evaluation.maxPoints, Math.max(0, requiredPercentage * evaluation.maxPoints))
+  const finalNote = Math.max(calculatedNote, Math.min(evaluation.maxPoints, aspirationalNote))
   
-  return Math.max(calculatedNote, Math.min(evaluation.maxPoints, aspirationalNote))
+  return applyRounding(finalNote, roundingType)
 }
 
 export function validateWeights(subject: Subject): { isValid: boolean; message?: string } {
