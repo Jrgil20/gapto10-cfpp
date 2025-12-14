@@ -47,15 +47,31 @@ export function ExportImportDialog({
     ? JSON.stringify({ subjects, config: normalizedConfig, exportDate: new Date().toISOString() }, null, 2)
     : JSON.stringify(importData ? { ...importData, config: normalizeConfig(importData.config) } : null, null, 2)
 
-  const totalEvaluations = dataToShow.subjects.reduce(
-    (sum, subject) => sum + subject.evaluations.length,
-    0
-  )
+  // Contar evaluaciones incluyendo sub-evaluaciones
+  const totalEvaluations = dataToShow.subjects.reduce((sum, subject) => {
+    return sum + subject.evaluations.reduce((evalSum, eval_) => {
+      // Para evaluaciones sumativas, contar sub-evaluaciones
+      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+        return evalSum + eval_.subEvaluations.length
+      }
+      // Para evaluaciones normales, contar como 1
+      return evalSum + 1
+    }, 0)
+  }, 0)
   
-  const completedEvaluations = dataToShow.subjects.reduce(
-    (sum, subject) => sum + subject.evaluations.filter(e => e.obtainedPoints !== undefined).length,
-    0
-  )
+  // Contar evaluaciones completadas incluyendo sub-evaluaciones
+  const completedEvaluations = dataToShow.subjects.reduce((sum, subject) => {
+    return sum + subject.evaluations.reduce((evalSum, eval_) => {
+      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+        // Para evaluaciones sumativas, contar sub-evaluaciones completadas
+        return evalSum + eval_.subEvaluations.filter(sub => sub.obtainedPoints !== undefined).length
+      } else if (eval_.obtainedPoints !== undefined) {
+        // Para evaluaciones normales, contar como 1 si tiene nota
+        return evalSum + 1
+      }
+      return evalSum
+    }, 0)
+  }, 0)
 
   const handleConfirm = () => {
     onConfirm()
@@ -169,7 +185,24 @@ export function ExportImportDialog({
                   </p>
                 ) : (
                   dataToShow.subjects.map((subject) => {
-                    const completed = subject.evaluations.filter(e => e.obtainedPoints !== undefined).length
+                    // Contar evaluaciones incluyendo sub-evaluaciones
+                    const totalEvals = subject.evaluations.reduce((sum, eval_) => {
+                      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+                        return sum + eval_.subEvaluations.length
+                      }
+                      return sum + 1
+                    }, 0)
+                    
+                    // Contar evaluaciones completadas incluyendo sub-evaluaciones
+                    const completed = subject.evaluations.reduce((sum, eval_) => {
+                      if (eval_.isSummative && eval_.subEvaluations && eval_.subEvaluations.length > 0) {
+                        return sum + eval_.subEvaluations.filter(sub => sub.obtainedPoints !== undefined).length
+                      } else if (eval_.obtainedPoints !== undefined) {
+                        return sum + 1
+                      }
+                      return sum
+                    }, 0)
+                    
                     return (
                       <div
                         key={subject.id}
@@ -190,7 +223,7 @@ export function ExportImportDialog({
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{subject.evaluations.length} evaluaciones</span>
+                            <span>{totalEvals} evaluaciones</span>
                             <span className="flex items-center gap-1">
                               {completed > 0 ? (
                                 <>
