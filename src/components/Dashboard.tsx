@@ -39,13 +39,13 @@ interface SortableSubjectCardProps {
   subject: Subject
   config: Config
   onSelectSubject: (subjectId: string) => void
-  isDragging?: boolean
+  sortMode: SortMode
 }
 
 /**
  * Componente de tarjeta de materia que puede ser arrastrada.
  */
-function SortableSubjectCard({ subject, config, onSelectSubject, isDragging }: SortableSubjectCardProps) {
+function SortableSubjectCard({ subject, config, onSelectSubject, sortMode }: SortableSubjectCardProps) {
   const {
     attributes,
     listeners,
@@ -401,7 +401,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
           <DashboardSortControls 
             sortMode={sortMode} 
             onSortModeChange={setSortMode}
-            isManualMode={sortMode === 'manual'}
+            isDragging={sortMode === 'manual'}
           />
           <Button onClick={onAddSubject} className="w-full sm:w-auto">
             <Plus className="mr-2" />
@@ -427,6 +427,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
                 subject={subject}
                 config={config}
                 onSelectSubject={onSelectSubject}
+                sortMode={sortMode}
               />
             ))}
           </div>
