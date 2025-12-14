@@ -130,7 +130,7 @@ export function ProgressVisualization({
             <StatusIndicator 
               statusInfo={statusInfo}
               size="lg"
-              highEvaluatedWeight={evaluatedWeight >= 75}
+              highEvaluatedWeight={evaluatedWeight > 0 ? (currentPercentage / evaluatedWeight) * 100 >= 75 : false}
             />
           </div>
         </div>
