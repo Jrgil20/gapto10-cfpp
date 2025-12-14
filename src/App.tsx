@@ -300,12 +300,43 @@ function App() {
             return
           }
 
+          // Validar y normalizar evaluaciones (incluyendo sub-evaluaciones)
+          // Esto asegura compatibilidad con datos antiguos y valida la estructura de sub-evaluaciones
+          const validatedSubjects = data.subjects.map((subject: Subject) => {
+            const validatedEvaluations = (subject.evaluations || []).map((eval_: any) => {
+              // Si tiene sub-evaluaciones, validarlas también
+              if (eval_.isSummative && eval_.subEvaluations && Array.isArray(eval_.subEvaluations)) {
+                return {
+                  ...eval_,
+                  subEvaluations: eval_.subEvaluations.map((sub: any, index: number) => ({
+                    // Asegurar que las sub-evaluaciones tengan todos los campos requeridos
+                    id: sub.id || `${Date.now()}-${index}-${Math.random()}`,
+                    name: sub.name || `Sub-evaluación ${index + 1}`,
+                    weight: typeof sub.weight === 'number' ? sub.weight : 0,
+                    maxPoints: typeof sub.maxPoints === 'number' ? sub.maxPoints : (eval_.maxPoints || 20),
+                    date: sub.date,
+                    obtainedPoints: sub.obtainedPoints,
+                    section: sub.section,
+                    isSummative: sub.isSummative
+                  }))
+                }
+              }
+              // Para evaluaciones normales o sin sub-evaluaciones, retornar tal cual
+              return eval_
+            })
+            
+            return {
+              ...subject,
+              evaluations: validatedEvaluations
+            }
+          })
+
           // Normalizar la configuración importada (aplicar defaults a valores faltantes)
           const importedConfig = normalizeConfig(data.config)
           
           // Mostrar diálogo de preview
           setImportData({
-            subjects: data.subjects,
+            subjects: validatedSubjects,
             config: importedConfig,
             exportDate: data.exportDate
           })
