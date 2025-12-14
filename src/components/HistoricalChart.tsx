@@ -15,7 +15,10 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
   const chartData = useMemo(() => {
     const completedEvaluations = subject.evaluations
       .filter(e => e.obtainedPoints !== undefined && e.date)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => {
+        if (!a.date || !b.date) return 0
+        return new Date(a.date).getTime() - new Date(b.date).getTime()
+      })
 
     if (completedEvaluations.length === 0) return []
 
@@ -36,6 +39,8 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
         config.roundingType
       )
 
+      if (!evaluation.date) return null
+      
       return {
         date: format(new Date(evaluation.date), 'dd MMM', { locale: es }),
         fullDate: format(new Date(evaluation.date), 'dd/MM/yyyy', { locale: es }),
@@ -48,7 +53,7 @@ export function HistoricalChart({ subject, config }: HistoricalChartProps) {
         cumulativePoints: Number(cumulativePoints.toFixed(2)),
         cumulativePercentage: Number(cumulativePercentage.toFixed(2))
       }
-    })
+    }).filter((item): item is NonNullable<typeof item> => item !== null)
   }, [subject.evaluations, config.percentagePerPoint, config.roundingType])
 
   if (chartData.length === 0) {

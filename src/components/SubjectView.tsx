@@ -29,7 +29,8 @@ interface SubjectViewProps {
   onAddEvaluation: () => void
   onEditEvaluation: (evaluation: Evaluation) => void
   onDeleteEvaluation: (evaluationId: string) => void
-  onUpdateNote: (evaluationId: string, points: number | undefined) => void
+  onUpdateNote: (evaluationId: string, points: number | undefined, parentEvaluationId?: string) => void
+  onAddSubEvaluation: (parentEvaluationId: string) => void
   calculationMode: CalculationMode
   onCalculationModeChange: (mode: CalculationMode) => void
 }
