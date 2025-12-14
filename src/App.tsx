@@ -151,7 +151,7 @@ function App() {
     setEvaluationDialogOpen(true)
   }
 
-  const handleUpdateNote = (evaluationId: string, points: number | undefined) => {
+  const handleUpdateNote = (evaluationId: string, points: number | undefined, parentEvaluationId?: string) => {
     if (!selectedSubjectId) return
 
     setSubjects((currentSubjects) =>
@@ -159,16 +159,72 @@ function App() {
         if (subject.id === selectedSubjectId) {
           return {
             ...subject,
-            evaluations: subject.evaluations.map((eval_) =>
-              eval_.id === evaluationId
-                ? { ...eval_, obtainedPoints: points }
-                : eval_
-            )
+            evaluations: subject.evaluations.map((eval_) => {
+              // Si es una sub-evaluación (tiene parentEvaluationId)
+              if (parentEvaluationId && eval_.id === parentEvaluationId && eval_.subEvaluations) {
+                return {
+                  ...eval_,
+                  subEvaluations: eval_.subEvaluations.map((sub) =>
+                    sub.id === evaluationId
+                      ? { ...sub, obtainedPoints: points }
+                      : sub
+                  )
+                }
+              }
+              // Si es una evaluación normal
+              if (!parentEvaluationId && eval_.id === evaluationId) {
+                return { ...eval_, obtainedPoints: points }
+              }
+              return eval_
+            })
           }
         }
         return subject
       })
     )
+  }
+
+  const handleAddSubEvaluation = (parentEvaluationId: string) => {
+    if (!selectedSubjectId) return
+
+    setSubjects((currentSubjects) =>
+      (currentSubjects || []).map((subject) => {
+        if (subject.id === selectedSubjectId) {
+          return {
+            ...subject,
+            evaluations: subject.evaluations.map((eval_) => {
+              if (eval_.id === parentEvaluationId && eval_.isSummative && eval_.subEvaluations) {
+                const newSubId = `${Date.now()}-${eval_.subEvaluations.length}`
+                const weightPerSub = eval_.weight / (eval_.subEvaluations.length + 1)
+                
+                // Recalcular el peso de todas las sub-evaluaciones
+                const updatedSubs = eval_.subEvaluations.map(sub => ({
+                  ...sub,
+                  weight: weightPerSub
+                }))
+                
+                return {
+                  ...eval_,
+                  subEvaluations: [
+                    ...updatedSubs,
+                    {
+                      id: newSubId,
+                      name: `Sub-evaluación ${eval_.subEvaluations.length + 1}`,
+                      maxPoints: eval_.maxPoints,
+                      weight: weightPerSub,
+                      section: eval_.section
+                    }
+                  ]
+                }
+              }
+              return eval_
+            })
+          }
+        }
+        return subject
+      })
+    )
+    toast.success('Sub-evaluación agregada')
   }
 
   const handleDeleteEvaluation = (evaluationId: string) => {
@@ -708,6 +764,7 @@ Total: 100% (20 pts.)
             onEditEvaluation={handleEditEvaluation}
             onDeleteEvaluation={handleDeleteEvaluation}
             onUpdateNote={handleUpdateNote}
+            onAddSubEvaluation={handleAddSubEvaluation}
             calculationMode={calculationMode}
             onCalculationModeChange={setCalculationMode}
           />
