@@ -318,7 +318,7 @@ export function SubjectView({
                                   (evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight,
                                   config.percentagePerPoint,
                                   config.roundingType
-                                ).toFixed(2)} pts
+                                )} pts
                               </span>
                             </div>
                           </div>
