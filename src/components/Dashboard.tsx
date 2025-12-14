@@ -202,7 +202,7 @@ function SortableSubjectCard({ subject, config, onSelectSubject, isDragging }: S
                     100 - evaluatedWeight,
                     config.percentagePerPoint,
                     config.roundingType
-                  )}</span> pts
+                  ).toFixed(1)}</span> pts
                 </span>
               </div>
               <StatusIndicator 
