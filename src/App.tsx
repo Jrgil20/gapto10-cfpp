@@ -303,7 +303,7 @@ function App() {
           // Validar y normalizar evaluaciones (incluyendo sub-evaluaciones)
           // Esto asegura compatibilidad con datos antiguos y valida la estructura de sub-evaluaciones
           const validatedSubjects = data.subjects.map((subject: Subject) => {
-            const validatedEvaluations = (subject.evaluations || []).map((eval_: any) => {
+            const validatedEvaluations = (subject.evaluations || []).map((eval_: Evaluation) => {
               // Si tiene sub-evaluaciones, validarlas también
               if (eval_.isSummative && eval_.subEvaluations && Array.isArray(eval_.subEvaluations)) {
                 return {
