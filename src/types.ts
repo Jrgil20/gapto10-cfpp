@@ -1,11 +1,13 @@
 export interface Evaluation {
   id: string
   name: string
-  date: string
+  date?: string // Opcional cuando isSummative es true
   weight: number
   maxPoints: number
   obtainedPoints?: number
   section?: 'theory' | 'practice'
+  isSummative?: boolean
+  subEvaluations?: Evaluation[] // Sub-evaluaciones para actividades sumativas
 }
 
 export interface Subject {

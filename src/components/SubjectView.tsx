@@ -260,6 +260,11 @@ export function SubjectView({
                               <span className="hidden sm:inline">{evaluation.section === 'theory' ? 'eoría' : 'ráctica'}</span>
                             </Badge>
                           )}
+                          {evaluation.isSummative && (
+                            <Badge variant="outline" className="text-xs py-0 px-1.5">
+                              Sumativa
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
