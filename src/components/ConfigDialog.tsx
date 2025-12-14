@@ -117,7 +117,7 @@ export function ConfigDialog({ open, onOpenChange, config, onSave }: ConfigDialo
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Método de redondeo para cálculos de notas finales. Algunas universidades requieren piso o techo en lugar de redondeo estándar.
+              Método de redondeo para cálculos de notas finales. Algunas universidades requieren piso o techo en lugar de redondeo estándar. Por ejemplo, con piso, 14.7 puntos se redondea a 14; con techo, se redondea a 15; con estándar, se redondea a 15.
             </p>
           </div>
 
