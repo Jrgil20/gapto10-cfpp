@@ -359,14 +359,7 @@ export function SubjectView({
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-semibold">Porcentaje obtenido</span>
                               <span className="font-data font-semibold text-primary">
-                                {(() => {
-                                  const completedSubs = evaluation.subEvaluations!.filter(sub => sub.obtainedPoints !== undefined)
-                                  if (completedSubs.length === 0) return '0.00%'
-                                  const averagePercentage = completedSubs.reduce((sum, sub) => {
-                                    return sum + ((sub.obtainedPoints! / sub.maxPoints) * 100)
-                                  }, 0) / completedSubs.length
-                                  return ((averagePercentage / 100) * evaluation.weight).toFixed(2) + '%'
-                                })()}
+                                {calculateSummativePercentage(evaluation).toFixed(2)}%
                               </span>
                             </div>
                           </div>

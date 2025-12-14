@@ -124,26 +124,24 @@ export function calculateProgressMetrics(params: ProgressParams) {
 
 /**
  * Calcula el porcentaje obtenido de una evaluación sumativa basado en sus sub-evaluaciones
+ * Suma las contribuciones de cada sub-evaluación completada
  */
-function calculateSummativePercentage(evaluation: Evaluation): number {
+export function calculateSummativePercentage(evaluation: Evaluation): number {
   if (!evaluation.isSummative || !evaluation.subEvaluations || evaluation.subEvaluations.length === 0) {
     return 0
   }
 
-  // Calcular el promedio de las sub-evaluaciones completadas
-  const completedSubs = evaluation.subEvaluations.filter(sub => sub.obtainedPoints !== undefined)
-  if (completedSubs.length === 0) {
-    return 0
-  }
+  // Calcular la suma de las contribuciones de cada sub-evaluación completada
+  // Cada sub-evaluación contribuye: (obtainedPoints / maxPoints) * subWeight
+  const totalPercentage = evaluation.subEvaluations.reduce((sum, sub) => {
+    if (sub.obtainedPoints !== undefined) {
+      const subContribution = (sub.obtainedPoints / sub.maxPoints) * sub.weight
+      return sum + subContribution
+    }
+    return sum
+  }, 0)
 
-  // Calcular el promedio de porcentajes obtenidos en las sub-evaluaciones
-  const averagePercentage = completedSubs.reduce((sum, sub) => {
-    const subPercentage = (sub.obtainedPoints! / sub.maxPoints) * 100
-    return sum + subPercentage
-  }, 0) / completedSubs.length
-
-  // Aplicar el peso de la evaluación sumativa
-  return (averagePercentage / 100) * evaluation.weight
+  return totalPercentage
 }
 
 export function calculateCurrentPercentage(
