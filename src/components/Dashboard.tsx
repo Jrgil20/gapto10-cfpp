@@ -127,12 +127,12 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject }: D
             calculation.currentPercentage,
             config.percentagePerPoint,
             config.roundingType
-          ).toFixed(1)
+          )
           const totalPoints = percentageToPoints(
             100,
             config.percentagePerPoint,
             config.roundingType
-          ).toFixed(0)
+          )
 
           return (
             <Card 
