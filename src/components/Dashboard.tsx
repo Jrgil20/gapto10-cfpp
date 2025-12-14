@@ -360,7 +360,7 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
     }
     
     return sorted
-  }, [subjects, sortMode, getOrderedSubjects, subjectsWithPerformance])
+  }, [sortMode, getOrderedSubjects, subjectsWithPerformance])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
