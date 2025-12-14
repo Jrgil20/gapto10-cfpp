@@ -28,7 +28,7 @@ export function useSubjectOrder(subjects: Subject[]) {
     const currentOrder = order.filter(id => subjectIds.includes(id))
     const newSubjects = subjectIds.filter(id => !order.includes(id))
     
-    if (newSubjects.length > 0 || currentOrder.length !== subjectIds.length) {
+    if (newSubjects.length > 0 || currentOrder.length !== order.length) {
       const newOrder = [...currentOrder, ...newSubjects]
       setOrder(newOrder)
       
