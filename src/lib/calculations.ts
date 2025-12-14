@@ -170,7 +170,7 @@ export function calculateCurrentPercentage(
 /**
  * Determina si una evaluación está completa (tiene nota o todas sus sub-evaluaciones tienen nota)
  */
-function isEvaluationComplete(evaluation: Evaluation): boolean {
+function isEvaluationFullyComplete(evaluation: Evaluation): boolean {
   if (evaluation.isSummative && evaluation.subEvaluations && evaluation.subEvaluations.length > 0) {
     // Una evaluación sumativa está completa si todas sus sub-evaluaciones tienen nota
     return evaluation.subEvaluations.every(sub => sub.obtainedPoints !== undefined)
