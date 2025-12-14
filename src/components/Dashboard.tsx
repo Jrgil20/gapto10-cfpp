@@ -163,14 +163,24 @@ function SortableSubjectCard({ subject, config, onSelectSubject, isDragging }: S
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               {/* Handle de arrastre */}
-              <div
-                {...attributes}
-                {...listeners}
-                className="mt-1 cursor-grab active:cursor-grabbing touch-none"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DotsSixVertical size={20} className="text-muted-foreground" />
-              </div>
+              {sortMode === 'manual' ? (
+                <div
+                  {...attributes}
+                  {...listeners}
+                  className="mt-1 cursor-grab active:cursor-grabbing touch-none"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DotsSixVertical size={20} className="text-muted-foreground" />
+                </div>
+              ) : (
+                <div
+                  className="mt-1 cursor-not-allowed opacity-50"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-disabled="true"
+                >
+                  <DotsSixVertical size={20} className="text-muted-foreground" />
+                </div>
+              )}
               
               <div className="flex flex-col gap-2 min-w-0 flex-1">
                 <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
