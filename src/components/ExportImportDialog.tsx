@@ -6,6 +6,7 @@ import { Subject, Config } from '../types'
 import { Download, Upload, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { normalizeConfig } from '../lib/configUtils'
 
 interface ExportImportDialogProps {
   open: boolean
@@ -16,7 +17,7 @@ interface ExportImportDialogProps {
   onConfirm: () => void
   importData?: {
     subjects: Subject[]
-    config: Config
+    config?: Partial<Config>
     exportDate?: string
   }
   showJson?: boolean
@@ -32,16 +33,19 @@ export function ExportImportDialog({
   importData,
   showJson = false
 }: ExportImportDialogProps) {
+  // Normalizar la configuración para mostrar (aplicar defaults)
+  const normalizedConfig = config ? normalizeConfig(config) : undefined
+  
   const dataToShow = mode === 'export' 
-    ? { subjects, config, exportDate: new Date().toISOString() }
-    : importData
+    ? { subjects, config: normalizedConfig, exportDate: new Date().toISOString() }
+    : importData ? { ...importData, config: normalizeConfig(importData.config) } : undefined
 
   if (!dataToShow) return null
 
-  // Preparar JSON para mostrar
+  // Preparar JSON para mostrar (usar config normalizada para preview)
   const jsonData = mode === 'export'
-    ? JSON.stringify({ subjects, config, exportDate: new Date().toISOString() }, null, 2)
-    : JSON.stringify(importData, null, 2)
+    ? JSON.stringify({ subjects, config: normalizedConfig, exportDate: new Date().toISOString() }, null, 2)
+    : JSON.stringify(importData ? { ...importData, config: normalizeConfig(importData.config) } : null, null, 2)
 
   const totalEvaluations = dataToShow.subjects.reduce(
     (sum, subject) => sum + subject.evaluations.length,
