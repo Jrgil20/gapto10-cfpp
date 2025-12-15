@@ -2,11 +2,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
 import { Subject, Config } from '../types'
 import { Download, Upload, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { normalizeConfig } from '../lib/configUtils'
+import { useState } from 'react'
 
 interface ExportImportDialogProps {
   open: boolean
@@ -14,7 +17,7 @@ interface ExportImportDialogProps {
   mode: 'export' | 'import'
   subjects?: Subject[]
   config?: Config
-  onConfirm: () => void
+  onConfirm: (exportAsTemplate?: boolean) => void
   importData?: {
     subjects: Subject[]
     config?: Partial<Config>
@@ -33,6 +36,8 @@ export function ExportImportDialog({
   importData,
   showJson = false
 }: ExportImportDialogProps) {
+  const [exportAsTemplate, setExportAsTemplate] = useState(false)
+  
   // Normalizar la configuración para mostrar (aplicar defaults)
   const normalizedConfig = config ? normalizeConfig(config) : undefined
   
@@ -74,12 +79,24 @@ export function ExportImportDialog({
   }, 0)
 
   const handleConfirm = () => {
-    onConfirm()
+    onConfirm(mode === 'export' ? exportAsTemplate : undefined)
     onOpenChange(false)
+    // Resetear el estado cuando se cierra el diálogo
+    if (mode === 'export') {
+      setExportAsTemplate(false)
+    }
+  }
+
+  // Resetear el estado cuando se abre/cierra el diálogo
+  const handleOpenChange = (open: boolean) => {
+    onOpenChange(open)
+    if (!open && mode === 'export') {
+      setExportAsTemplate(false)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -249,6 +266,31 @@ export function ExportImportDialog({
             </>
           )}
 
+          {mode === 'export' && (
+            <Card className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="export-template"
+                    checked={exportAsTemplate}
+                    onCheckedChange={(checked) => setExportAsTemplate(checked === true)}
+                  />
+                  <div className="flex flex-col gap-1 flex-1">
+                    <Label
+                      htmlFor="export-template"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Exportar como template
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Exporta para compartir: elimina todas las notas obtenidas, manteniendo solo la estructura de materias y evaluaciones.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {mode === 'import' && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
               <p className="text-sm text-destructive font-medium">
@@ -259,14 +301,14 @@ export function ExportImportDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancelar
           </Button>
           <Button onClick={handleConfirm}>
             {mode === 'export' ? (
               <>
                 <Download className="mr-2" size={16} />
-                Exportar
+                {exportAsTemplate ? 'Exportar Template' : 'Exportar'}
               </>
             ) : (
               <>

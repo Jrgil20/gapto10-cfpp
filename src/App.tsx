@@ -249,16 +249,40 @@ function App() {
     setExportImportDialogOpen(true)
   }
 
-  const handleConfirmExport = () => {
+  const handleConfirmExport = (exportAsTemplate?: boolean) => {
     // Minimizar la configuración para solo exportar valores que difieren del default
     const minimizedConfig = minimizeConfig(configData)
+    
+    // Si es template, eliminar todas las notas obtenidas
+    let subjectsToExport = subjectsData
+    if (exportAsTemplate) {
+      subjectsToExport = subjectsData.map(subject => ({
+        ...subject,
+        evaluations: subject.evaluations.map(evaluation => {
+          // Para evaluaciones normales, eliminar obtainedPoints
+          if (!evaluation.isSummative || !evaluation.subEvaluations) {
+            const { obtainedPoints, ...evaluationWithoutPoints } = evaluation
+            return evaluationWithoutPoints
+          }
+          // Para evaluaciones sumativas, eliminar obtainedPoints de la evaluación principal y de las sub-evaluaciones
+          return {
+            ...evaluation,
+            obtainedPoints: undefined,
+            subEvaluations: evaluation.subEvaluations.map(subEval => {
+              const { obtainedPoints, ...subEvalWithoutPoints } = subEval
+              return subEvalWithoutPoints
+            })
+          }
+        })
+      }))
+    }
     
     const data: {
       subjects: Subject[]
       config?: Partial<Config>
       exportDate: string
     } = {
-      subjects: subjectsData,
+      subjects: subjectsToExport,
       exportDate: new Date().toISOString()
     }
 
@@ -271,13 +295,15 @@ function App() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `notas-${new Date().toISOString().split('T')[0]}.json`
+    a.download = exportAsTemplate 
+      ? `template-${new Date().toISOString().split('T')[0]}.json`
+      : `notas-${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
     
-    toast.success('Datos exportados')
+    toast.success(exportAsTemplate ? 'Template exportado' : 'Datos exportados')
   }
 
   const handleImport = () => {
