@@ -18,7 +18,7 @@ import {
 } from './ui/alert-dialog'
 import { Plus, Calendar, Percent, PencilSimple, Trash, Question } from '@phosphor-icons/react'
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
-import { validateWeights, percentageToPoints, calculateSummativePercentage } from '../lib/calculations'
+import { validateWeights, calculateSummativePercentage } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
 
@@ -434,10 +434,8 @@ export function SubjectView({
                               <span className="text-xs text-muted-foreground">Puntos Obtenidos</span>
                               <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
                                 <span className="font-data font-semibold text-accent">
-                                  {percentageToPoints(
-                                    (evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight,
-                                    config.percentagePerPoint,
-                                    config.roundingType
+                                  {(
+                                    ((evaluation.obtainedPoints / evaluation.maxPoints) * evaluation.weight) / config.percentagePerPoint
                                   )} pts
                                 </span>
                               </div>
