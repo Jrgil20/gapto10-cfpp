@@ -1,11 +1,14 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 /** @type {import('tailwindcss').Config} */
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 let theme = {};
 try {
-  const themePath = path.join(import.meta.dirname, "theme.json");
+  const themePath = path.join(__dirname, "theme.json");
 
   if (fs.existsSync(themePath)) {
     theme = JSON.parse(fs.readFileSync(themePath, "utf-8"));

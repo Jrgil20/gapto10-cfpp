@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -21,6 +21,16 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
   const [theoryWeight, setTheoryWeight] = useState(subject?.theoryWeight?.toString() || '70')
   const [practiceWeight, setPracticeWeight] = useState(subject?.practiceWeight?.toString() || '30')
   const [difficulty, setDifficulty] = useState<DifficultyLevel | undefined>(subject?.difficulty)
+
+  useEffect(() => {
+    if (open) {
+      setName(subject?.name || '')
+      setHasSplit(subject?.hasSplit || false)
+      setTheoryWeight(subject?.theoryWeight?.toString() || '70')
+      setPracticeWeight(subject?.practiceWeight?.toString() || '30')
+      setDifficulty(subject?.difficulty)
+    }
+  }, [open, subject])
 
   const handleSave = () => {
     if (!name.trim()) return
