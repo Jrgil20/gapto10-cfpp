@@ -826,6 +826,7 @@ Total: 100% (20 pts.)
             config={configData}
             onSelectSubject={handleSelectSubject}
             onAddSubject={() => setSubjectDialogOpen(true)}
+            onOpenSemesterView={handleOpenSemester}
           />
         ) : view === 'semester' ? (
           <SemesterView

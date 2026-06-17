@@ -18,6 +18,7 @@ import {
 } from './ui/alert-dialog'
 import { Plus, Calendar, Percent, PencilSimple, Trash, Question } from '@phosphor-icons/react'
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
+import { getDifficultyLabel, getDifficultyColor } from '../lib/difficultyUtils'
 import { validateWeights, calculateSummativePercentage } from '../lib/calculations'
 import { ProgressVisualization } from './ProgressVisualization'
 import { HistoricalChart } from './HistoricalChart'
@@ -287,6 +288,11 @@ export function SubjectView({
                             <Badge variant="secondary" className="text-xs py-0 px-1.5">
                               {evaluation.section === 'theory' ? 'T' : 'P'}
                               <span className="hidden sm:inline">{evaluation.section === 'theory' ? 'eoría' : 'ráctica'}</span>
+                            </Badge>
+                          )}
+                          {evaluation.difficulty && (
+                            <Badge className={`text-xs py-0 px-1.5 ${getDifficultyColor(evaluation.difficulty)}`}>
+                              {getDifficultyLabel(evaluation.difficulty)}
                             </Badge>
                           )}
                           {evaluation.isSummative && (

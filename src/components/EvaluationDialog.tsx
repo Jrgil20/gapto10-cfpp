@@ -6,7 +6,7 @@ import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Checkbox } from './ui/checkbox'
 import { Alert, AlertDescription } from './ui/alert'
-import { Evaluation, Subject } from '../types'
+import { Evaluation, Subject, DifficultyLevel } from '../types'
 import { Plus, Trash } from '@phosphor-icons/react'
 import { SubEvaluationCreator } from './SubEvaluationCreator'
 
@@ -48,6 +48,7 @@ export function EvaluationDialog({
   const [subEvaluations, setSubEvaluations] = useState<Omit<Evaluation, 'id'>[]>([])
   const [subEvaluationBaseName, setSubEvaluationBaseName] = useState('')
   const [subEvaluationCount, setSubEvaluationCount] = useState('1')
+  const [difficulty, setDifficulty] = useState<DifficultyLevel | undefined>()
 
   useEffect(() => {
     if (open) {
@@ -74,6 +75,7 @@ export function EvaluationDialog({
         })) || [])
         setSubEvaluationBaseName('')
         setSubEvaluationCount('1')
+        setDifficulty(evaluation.difficulty)
       } else {
         setName('')
         setDate('')
@@ -89,6 +91,7 @@ export function EvaluationDialog({
         setSubEvaluations([])
         setSubEvaluationBaseName('')
         setSubEvaluationCount('1')
+        setDifficulty(undefined)
       }
     }
   }, [open, evaluation, defaultMaxPoints])
@@ -256,7 +259,8 @@ export function EvaluationDialog({
           weight: weightNum,
           maxPoints: maxPointsNum,
           section: subject.hasSplit ? section : undefined,
-          isSummative: isSummative
+          isSummative: isSummative,
+          ...(difficulty && { difficulty })
         })
       }
 
@@ -299,7 +303,8 @@ export function EvaluationDialog({
         obtainedPoints: evaluation?.obtainedPoints,
         section: subject.hasSplit ? section : undefined,
         isSummative: isSummative,
-        subEvaluations: finalSubEvaluations
+        subEvaluations: finalSubEvaluations,
+        ...(difficulty && { difficulty })
       })
     }
 
@@ -552,6 +557,22 @@ export function EvaluationDialog({
               </Select>
             </div>
           )}
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="eval-difficulty">Dificultad (opcional)</Label>
+            <Select value={difficulty || ''} onValueChange={(val) => setDifficulty(val as DifficultyLevel || undefined)}>
+              <SelectTrigger id="eval-difficulty">
+                <SelectValue placeholder="Sin especificar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin especificar</SelectItem>
+                <SelectItem value="easy">Fácil</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="hard">Difícil</SelectItem>
+                <SelectItem value="very-hard">Muy Difícil</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {exceedsLimit && (
             <Alert variant="destructive">

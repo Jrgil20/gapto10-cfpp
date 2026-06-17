@@ -3,8 +3,9 @@ import { Subject, Config } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { Plus, DotsSixVertical } from '@phosphor-icons/react'
+import { Plus, DotsSixVertical, ChartBar } from '@phosphor-icons/react'
 import { calculateRequiredNotes, getProgressStatus, percentageToPoints } from '../lib/calculations'
+import { getDifficultyLabel, getDifficultyColor, getDifficultyMultiplier } from '../lib/difficultyUtils'
 import { ProgressBar } from './ProgressBar'
 import { StatusIndicator } from './StatusIndicator'
 import { DashboardSortControls, SortMode } from './DashboardSortControls'
@@ -33,6 +34,7 @@ interface DashboardProps {
   onSelectSubject: (subjectId: string) => void
   onAddSubject: () => void
   onReorderSubjects?: (newOrder: string[]) => void
+  onOpenSemesterView?: () => void
 }
 
 interface SortableSubjectCardProps {
@@ -183,7 +185,14 @@ function SortableSubjectCard({ subject, config, onSelectSubject, sortMode }: Sor
               )}
               
               <div className="flex flex-col gap-2 min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
+                  {subject.difficulty && (
+                    <Badge className={`text-xs ${getDifficultyColor(subject.difficulty)}`}>
+                      {getDifficultyLabel(subject.difficulty)}
+                    </Badge>
+                  )}
+                </div>
                 {subject.hasSplit && (
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     <Badge variant="outline" className={`text-xs ${theoryApproved ? "border-accent/50" : "border-destructive/50"}`}>
@@ -271,7 +280,7 @@ function SortableSubjectCard({ subject, config, onSelectSubject, sortMode }: Sor
  * Dashboard principal que muestra todas las materias con su progreso.
  * Soporta ordenamiento mediante drag-and-drop y filtros automáticos.
  */
-export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onReorderSubjects }: DashboardProps) {
+export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onReorderSubjects, onOpenSemesterView }: DashboardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('worst-first')
   const { getOrderedSubjects, reorderSubjects } = useSubjectOrder(subjects)
   
@@ -349,11 +358,22 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
           break
           
         case 'alphabetical-desc':
-          sorted = [...subjects].sort((a, b) => 
+          sorted = [...subjects].sort((a, b) =>
             b.name.localeCompare(a.name, 'es', { sensitivity: 'base' })
           )
           break
-          
+
+        case 'difficulty-desc':
+          sorted = subjectsArray
+            .sort((a, b) => {
+              const multA = getDifficultyMultiplier(a.subject.difficulty)
+              const multB = getDifficultyMultiplier(b.subject.difficulty)
+              if (multA !== multB) return multB - multA
+              return b.currentPercentage - a.currentPercentage
+            })
+            .map(item => item.subject)
+          break
+
         default:
           sorted = subjects
       }
@@ -398,11 +418,15 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold">Dashboard de Materias</h1>
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <DashboardSortControls 
-            sortMode={sortMode} 
+          <DashboardSortControls
+            sortMode={sortMode}
             onSortModeChange={setSortMode}
             isDragging={sortMode === 'manual'}
           />
+          <Button onClick={onOpenSemesterView} variant="outline" className="w-full sm:w-auto">
+            <ChartBar className="mr-2" size={18} />
+            Vista Semestral
+          </Button>
           <Button onClick={onAddSubject} className="w-full sm:w-auto">
             <Plus className="mr-2" />
             Nueva Materia

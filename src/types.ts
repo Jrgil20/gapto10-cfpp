@@ -1,3 +1,5 @@
+export type DifficultyLevel = 'easy' | 'normal' | 'hard' | 'very-hard'
+
 export interface Evaluation {
   id: string
   name: string
@@ -8,6 +10,7 @@ export interface Evaluation {
   section?: 'theory' | 'practice'
   isSummative?: boolean
   subEvaluations?: Evaluation[] // Sub-evaluaciones para actividades sumativas
+  difficulty?: DifficultyLevel
 }
 
 export interface Subject {
@@ -17,6 +20,7 @@ export interface Subject {
   theoryWeight?: number
   practiceWeight?: number
   evaluations: Evaluation[]
+  difficulty?: DifficultyLevel
 }
 
 /**
