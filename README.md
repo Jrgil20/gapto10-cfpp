@@ -26,22 +26,36 @@ Una aplicación web para gestionar y calcular las notas necesarias en evaluacion
 
 ## 🚀 Instalación y Desarrollo
 
+### Requisitos Previos
+- Node.js >= 20.0.0
+- pnpm >= 10.0.0
+
+### Comandos
+
 ```bash
 # Instalar dependencias
-npm install
+pnpm install
 
 # Ejecutar en modo desarrollo
-npm run dev
+pnpm dev
 
 # Construir para producción
-npm run build
+pnpm build
 
 # Previsualizar build de producción
-npm run preview
+pnpm preview
 
 # Ejecutar linter
-npm run lint
+pnpm lint
+
+# Ejecutar tests
+pnpm test
+
+# Ejecutar tests en modo watch
+pnpm test:watch
 ```
+
+> **Nota**: Este proyecto usa **pnpm** como gestor de paquetes. Si aún no lo tienes instalado, ejecuta: `npm install -g pnpm@10`
 
 ## 📖 Uso
 
