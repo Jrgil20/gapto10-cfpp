@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   applyRounding,
   percentageToPoints,
@@ -8,6 +8,9 @@ import {
   calculateCurrentPercentage,
   calculateRequiredNotes,
   validateWeights,
+  getSemesterSummary,
+  getUpcomingEvaluations,
+  getSubjectUrgencyScore,
 } from './calculations'
 import type { Evaluation, Subject, Config } from '../types'
 
@@ -403,6 +406,188 @@ describe('calculateRequiredNotes', () => {
       const result = calculateRequiredNotes(makeSubject(evals), defaultConfig)
       expect(result.requiredNotes).toHaveLength(1)
       expect(result.requiredNotes[0].evaluationId).toBe('s2')
+    })
+  })
+})
+
+// ── Semester strategy calculations ────────────────────────────────────────
+
+// Pin "today" so date-based tests are deterministic
+const FIXED_TODAY = new Date('2026-06-16T00:00:00.000Z')
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+function withFixedDate(fn: () => void) {
+  vi.useFakeTimers()
+  vi.setSystemTime(FIXED_TODAY)
+  fn()
+  vi.useRealTimers()
+}
+
+function dateFromToday(offsetDays: number): string {
+  const d = new Date(FIXED_TODAY)
+  d.setDate(d.getDate() + offsetDays)
+  return d.toISOString().split('T')[0]
+}
+
+describe('getSemesterSummary', () => {
+  it('places approved subject in approved list', () => {
+    const evals = [makeEval({ id: 'e1', weight: 100, maxPoints: 20, obtainedPoints: 20 })]
+    const summary = getSemesterSummary([makeSubject(evals)], defaultConfig)
+    expect(summary.approved).toHaveLength(1)
+    expect(summary.safe).toHaveLength(0)
+    expect(summary.atRisk).toHaveLength(0)
+  })
+
+  it('places subject with no completed evaluations in notStarted', () => {
+    const evals = [makeEval({ id: 'e1', weight: 100 })]
+    const summary = getSemesterSummary([makeSubject(evals)], defaultConfig)
+    expect(summary.notStarted).toHaveLength(1)
+  })
+
+  it('places subject with high performance in safe', () => {
+    // 14/20 * 50 = 35% from e1, 50% pending → 70% of 50 evaluated → high_performance
+    const evals = [
+      makeEval({ id: 'e1', weight: 50, maxPoints: 20, obtainedPoints: 14 }),
+      makeEval({ id: 'e2', weight: 50, maxPoints: 20 }),
+    ]
+    const summary = getSemesterSummary([makeSubject(evals)], defaultConfig)
+    expect(summary.safe).toHaveLength(1)
+  })
+
+  it('places subject with low performance in atRisk', () => {
+    // 5/20 * 50 = 12.5% from e1 → 25% of 50 evaluated → low_performance
+    const evals = [
+      makeEval({ id: 'e1', weight: 50, maxPoints: 20, obtainedPoints: 5 }),
+      makeEval({ id: 'e2', weight: 50, maxPoints: 20 }),
+    ]
+    const summary = getSemesterSummary([makeSubject(evals)], defaultConfig)
+    expect(summary.atRisk).toHaveLength(1)
+  })
+
+  it('places subject where passing is impossible in impossible', () => {
+    // 2/20 * 80 = 8%, remaining 20% → max possible = 28% < 60%
+    const evals = [
+      makeEval({ id: 'e1', weight: 80, maxPoints: 20, obtainedPoints: 2 }),
+      makeEval({ id: 'e2', weight: 20, maxPoints: 20 }),
+    ]
+    const summary = getSemesterSummary([makeSubject(evals)], defaultConfig)
+    expect(summary.impossible).toHaveLength(1)
+  })
+
+  it('handles multiple subjects across different categories', () => {
+    const approved = makeSubject(
+      [makeEval({ id: 'e1', weight: 100, maxPoints: 20, obtainedPoints: 20 })],
+      { id: 'approved' }
+    )
+    const notStarted = makeSubject(
+      [makeEval({ id: 'e2', weight: 100 })],
+      { id: 'notStarted' }
+    )
+    const summary = getSemesterSummary([approved, notStarted], defaultConfig)
+    expect(summary.approved).toHaveLength(1)
+    expect(summary.notStarted).toHaveLength(1)
+  })
+})
+
+describe('getUpcomingEvaluations', () => {
+  it('returns empty array when no evaluations have dates', () => {
+    withFixedDate(() => {
+      const evals = [makeEval({ id: 'e1', weight: 100 })]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  it('excludes evaluations that already have a grade', () => {
+    withFixedDate(() => {
+      const evals = [
+        makeEval({ id: 'e1', weight: 100, obtainedPoints: 15, date: dateFromToday(3) }),
+      ]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  it('excludes evaluations outside the daysAhead window', () => {
+    withFixedDate(() => {
+      const evals = [
+        makeEval({ id: 'e1', weight: 100, date: dateFromToday(20) }),
+      ]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig, 14)
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  it('excludes evaluations in the past', () => {
+    withFixedDate(() => {
+      const evals = [
+        makeEval({ id: 'e1', weight: 100, date: dateFromToday(-1) }),
+      ]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  it('returns upcoming pending evaluations sorted by date', () => {
+    withFixedDate(() => {
+      const evals = [
+        makeEval({ id: 'e1', weight: 50, date: dateFromToday(7) }),
+        makeEval({ id: 'e2', weight: 50, date: dateFromToday(3) }),
+      ]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(result).toHaveLength(2)
+      expect(result[0].evaluation.id).toBe('e2') // closer first
+      expect(result[1].evaluation.id).toBe('e1')
+    })
+  })
+
+  it('urgencyScore is higher for evaluations that are sooner', () => {
+    withFixedDate(() => {
+      const evals = [
+        makeEval({ id: 'e1', weight: 50, date: dateFromToday(1) }),
+        makeEval({ id: 'e2', weight: 50, date: dateFromToday(13) }),
+      ]
+      const result = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(result[0].urgencyScore).toBeGreaterThan(result[1].urgencyScore)
+    })
+  })
+
+  it('urgencyScore is between 0 and 100', () => {
+    withFixedDate(() => {
+      const evals = [makeEval({ id: 'e1', weight: 100, date: dateFromToday(5) })]
+      const [item] = getUpcomingEvaluations([makeSubject(evals)], defaultConfig)
+      expect(item.urgencyScore).toBeGreaterThanOrEqual(0)
+      expect(item.urgencyScore).toBeLessThanOrEqual(100)
+    })
+  })
+})
+
+describe('getSubjectUrgencyScore', () => {
+  it('returns 0 when subject has no evaluations with dates', () => {
+    withFixedDate(() => {
+      const subject = makeSubject([makeEval({ id: 'e1', weight: 100 })])
+      expect(getSubjectUrgencyScore(subject, defaultConfig)).toBe(0)
+    })
+  })
+
+  it('returns 0 when all evaluations are completed', () => {
+    withFixedDate(() => {
+      const subject = makeSubject([
+        makeEval({ id: 'e1', weight: 100, obtainedPoints: 15, date: dateFromToday(3) }),
+      ])
+      expect(getSubjectUrgencyScore(subject, defaultConfig)).toBe(0)
+    })
+  })
+
+  it('returns a positive score for a pending evaluation with an upcoming date', () => {
+    withFixedDate(() => {
+      const subject = makeSubject([
+        makeEval({ id: 'e1', weight: 100, date: dateFromToday(5) }),
+      ])
+      expect(getSubjectUrgencyScore(subject, defaultConfig)).toBeGreaterThan(0)
     })
   })
 })

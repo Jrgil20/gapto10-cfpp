@@ -1,4 +1,5 @@
-import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus, RoundingType } from '../types'
+import { differenceInDays } from 'date-fns'
+import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus, RoundingType, SemesterSummary, UpcomingEvaluation } from '../types'
 
 /**
  * Aplica el tipo de redondeo configurado a un valor numérico.
@@ -470,4 +471,136 @@ export function validateWeights(subject: Subject): { isValid: boolean; message?:
   }
   
   return { isValid: true }
+}
+
+// ── Semester strategy calculations ────────────────────────────────────────
+
+const STATUS_PRIORITY: Record<ProgressStatus, number> = {
+  impossible: 0,
+  low_performance: 1,
+  medium_performance: 2,
+  high_performance: 3,
+  approved: 4,
+  no_evaluations: 5,
+}
+
+function worstStatus(a: ProgressStatus, b: ProgressStatus): ProgressStatus {
+  return STATUS_PRIORITY[a] <= STATUS_PRIORITY[b] ? a : b
+}
+
+export function getSemesterSummary(subjects: Subject[], config: Config): SemesterSummary {
+  const summary: SemesterSummary = { approved: [], safe: [], atRisk: [], impossible: [], notStarted: [] }
+
+  for (const subject of subjects) {
+    const result = calculateRequiredNotes(subject, config)
+
+    if (result.isApproved) {
+      summary.approved.push(subject)
+      continue
+    }
+
+    let status: ProgressStatus
+
+    if (subject.hasSplit && subject.theoryWeight && subject.practiceWeight) {
+      const theoryEvals = subject.evaluations.filter(e => e.section === 'theory')
+      const practiceEvals = subject.evaluations.filter(e => e.section === 'practice')
+
+      const theoryEvaluated = theoryEvals.filter(isEvaluationFullyComplete).reduce((s, e) => s + e.weight, 0)
+      const practiceEvaluated = practiceEvals.filter(isEvaluationFullyComplete).reduce((s, e) => s + e.weight, 0)
+
+      const theoryPassingPoint = (subject.theoryWeight * config.passingPercentage) / 100
+      const practicePassingPoint = (subject.practiceWeight * config.passingPercentage) / 100
+
+      const theoryStatus = getProgressStatus({
+        current: result.currentTheoryPercentage ?? 0,
+        evaluated: theoryEvaluated,
+        passingPoint: theoryPassingPoint,
+        target: subject.theoryWeight,
+        label: 'teoría',
+      })
+      const practiceStatus = getProgressStatus({
+        current: result.currentPracticePercentage ?? 0,
+        evaluated: practiceEvaluated,
+        passingPoint: practicePassingPoint,
+        target: subject.practiceWeight,
+        label: 'práctica',
+      })
+
+      status = worstStatus(theoryStatus.status, practiceStatus.status)
+    } else {
+      const evaluatedWeight = subject.evaluations
+        .filter(isEvaluationFullyComplete)
+        .reduce((s, e) => s + e.weight, 0)
+
+      status = getProgressStatus({
+        current: result.currentPercentage,
+        evaluated: evaluatedWeight,
+        passingPoint: config.passingPercentage,
+        target: 100,
+      }).status
+    }
+
+    switch (status) {
+      case 'no_evaluations': summary.notStarted.push(subject); break
+      case 'impossible':     summary.impossible.push(subject); break
+      case 'high_performance': summary.safe.push(subject);    break
+      default:               summary.atRisk.push(subject);    break
+    }
+  }
+
+  return summary
+}
+
+export function getUpcomingEvaluations(
+  subjects: Subject[],
+  config: Config,
+  daysAhead: number = 14
+): UpcomingEvaluation[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const results: UpcomingEvaluation[] = []
+
+  for (const subject of subjects) {
+    const calcResult = calculateRequiredNotes(subject, config)
+    const requiredMap = new Map(calcResult.requiredNotes.map(n => [n.evaluationId, n.pessimistic]))
+
+    for (const eval_ of subject.evaluations) {
+      if (eval_.isSummative && eval_.subEvaluations?.length) {
+        if (!eval_.date) continue
+        const evalDate = new Date(eval_.date)
+        evalDate.setHours(0, 0, 0, 0)
+        const daysUntil = differenceInDays(evalDate, today)
+        if (daysUntil < 0 || daysUntil > daysAhead) continue
+
+        for (const sub of eval_.subEvaluations) {
+          if (sub.obtainedPoints !== undefined) continue
+          const requiredPoints = requiredMap.get(sub.id) ?? 0
+          const daysFactor = 1 - daysUntil / daysAhead
+          const noteFactor = sub.maxPoints > 0 ? requiredPoints / sub.maxPoints : 0
+          const urgencyScore = Math.round((daysFactor * 0.6 + noteFactor * 0.4) * 100)
+          results.push({ subject, evaluation: { ...sub, date: eval_.date }, daysUntil, requiredPoints, urgencyScore })
+        }
+      } else {
+        if (!eval_.date || eval_.obtainedPoints !== undefined) continue
+        const evalDate = new Date(eval_.date)
+        evalDate.setHours(0, 0, 0, 0)
+        const daysUntil = differenceInDays(evalDate, today)
+        if (daysUntil < 0 || daysUntil > daysAhead) continue
+
+        const requiredPoints = requiredMap.get(eval_.id) ?? 0
+        const daysFactor = 1 - daysUntil / daysAhead
+        const noteFactor = eval_.maxPoints > 0 ? requiredPoints / eval_.maxPoints : 0
+        const urgencyScore = Math.round((daysFactor * 0.6 + noteFactor * 0.4) * 100)
+        results.push({ subject, evaluation: eval_, daysUntil, requiredPoints, urgencyScore })
+      }
+    }
+  }
+
+  return results.sort((a, b) => a.daysUntil - b.daysUntil)
+}
+
+export function getSubjectUrgencyScore(subject: Subject, config: Config): number {
+  const upcoming = getUpcomingEvaluations([subject], config, 30)
+  if (upcoming.length === 0) return 0
+  return Math.max(...upcoming.map(u => u.urgencyScore))
 }
