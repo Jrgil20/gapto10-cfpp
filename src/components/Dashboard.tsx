@@ -3,7 +3,7 @@ import { Subject, Config } from '../types'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { Plus, DotsSixVertical } from '@phosphor-icons/react'
+import { Plus, DotsSixVertical, ChartBar } from '@phosphor-icons/react'
 import { calculateRequiredNotes, getProgressStatus, percentageToPoints } from '../lib/calculations'
 import { ProgressBar } from './ProgressBar'
 import { StatusIndicator } from './StatusIndicator'
@@ -33,6 +33,7 @@ interface DashboardProps {
   onSelectSubject: (subjectId: string) => void
   onAddSubject: () => void
   onReorderSubjects?: (newOrder: string[]) => void
+  onOpenSemesterView?: () => void
 }
 
 interface SortableSubjectCardProps {
@@ -271,7 +272,7 @@ function SortableSubjectCard({ subject, config, onSelectSubject, sortMode }: Sor
  * Dashboard principal que muestra todas las materias con su progreso.
  * Soporta ordenamiento mediante drag-and-drop y filtros automáticos.
  */
-export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onReorderSubjects }: DashboardProps) {
+export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onReorderSubjects, onOpenSemesterView }: DashboardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('worst-first')
   const { getOrderedSubjects, reorderSubjects } = useSubjectOrder(subjects)
   
@@ -398,11 +399,15 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold">Dashboard de Materias</h1>
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <DashboardSortControls 
-            sortMode={sortMode} 
+          <DashboardSortControls
+            sortMode={sortMode}
             onSortModeChange={setSortMode}
             isDragging={sortMode === 'manual'}
           />
+          <Button onClick={onOpenSemesterView} variant="outline" className="w-full sm:w-auto">
+            <ChartBar className="mr-2" size={18} />
+            Vista Semestral
+          </Button>
           <Button onClick={onAddSubject} className="w-full sm:w-auto">
             <Plus className="mr-2" />
             Nueva Materia
