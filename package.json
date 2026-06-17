@@ -8,7 +8,7 @@
         "dev": "vite",
         "build": "tsc -b && vite build",
         "preview": "vite preview",
-        "lint": "eslint .",
+        "lint": "eslint . --config config/eslint.config.js",
         "test": "vitest run",
         "test:watch": "vitest"
     },

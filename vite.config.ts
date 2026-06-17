@@ -12,7 +12,9 @@ export default defineConfig({
   base: process.env.CI ? '/gapto10-cfpp/' : '/',
   plugins: [
     react(),
-    tailwindcss(),
+    tailwindcss({
+      config: resolve(projectRoot, 'config/tailwind.config.js')
+    }),
   ],
   resolve: {
     alias: {
