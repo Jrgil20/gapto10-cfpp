@@ -5,6 +5,7 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Plus, DotsSixVertical, ChartBar } from '@phosphor-icons/react'
 import { calculateRequiredNotes, getProgressStatus, percentageToPoints } from '../lib/calculations'
+import { getDifficultyLabel, getDifficultyColor, getDifficultyMultiplier } from '../lib/difficultyUtils'
 import { ProgressBar } from './ProgressBar'
 import { StatusIndicator } from './StatusIndicator'
 import { DashboardSortControls, SortMode } from './DashboardSortControls'
@@ -184,7 +185,14 @@ function SortableSubjectCard({ subject, config, onSelectSubject, sortMode }: Sor
               )}
               
               <div className="flex flex-col gap-2 min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-bold truncate">{subject.name}</h2>
+                  {subject.difficulty && (
+                    <Badge className={`text-xs ${getDifficultyColor(subject.difficulty)}`}>
+                      {getDifficultyLabel(subject.difficulty)}
+                    </Badge>
+                  )}
+                </div>
                 {subject.hasSplit && (
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     <Badge variant="outline" className={`text-xs ${theoryApproved ? "border-accent/50" : "border-destructive/50"}`}>
@@ -350,11 +358,22 @@ export function Dashboard({ subjects, config, onSelectSubject, onAddSubject, onR
           break
           
         case 'alphabetical-desc':
-          sorted = [...subjects].sort((a, b) => 
+          sorted = [...subjects].sort((a, b) =>
             b.name.localeCompare(a.name, 'es', { sensitivity: 'base' })
           )
           break
-          
+
+        case 'difficulty-desc':
+          sorted = subjectsArray
+            .sort((a, b) => {
+              const multA = getDifficultyMultiplier(a.subject.difficulty)
+              const multB = getDifficultyMultiplier(b.subject.difficulty)
+              if (multA !== multB) return multB - multA
+              return b.currentPercentage - a.currentPercentage
+            })
+            .map(item => item.subject)
+          break
+
         default:
           sorted = subjects
       }

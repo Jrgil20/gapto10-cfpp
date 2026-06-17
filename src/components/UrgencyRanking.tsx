@@ -6,6 +6,7 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { StatusIndicator } from './StatusIndicator'
 import { getSemesterSummary, getSubjectUrgencyScore, calculateRequiredNotes, getProgressStatus, calculateProgressMetrics } from '../lib/calculations'
+import { getDifficultyLabel, getDifficultyColor } from '../lib/difficultyUtils'
 
 interface UrgencyRankingProps {
   subjects: Subject[]
@@ -71,6 +72,11 @@ export function UrgencyRanking({ subjects, config }: UrgencyRankingProps & { onS
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {subject.difficulty && (
+                  <Badge className={`text-xs px-1.5 py-0 ${getDifficultyColor(subject.difficulty)}`}>
+                    {getDifficultyLabel(subject.difficulty)}
+                  </Badge>
+                )}
                 {!isApproved && !notStarted && (
                   <Badge variant={variant} className="text-xs px-1.5 py-0">
                     {urgLabel}

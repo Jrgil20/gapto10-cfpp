@@ -1,5 +1,6 @@
 import { differenceInDays } from 'date-fns'
 import { Subject, Evaluation, Config, CalculationResult, ProgressParams, StatusInfo, ProgressStatus, RoundingType, SemesterSummary, UpcomingEvaluation } from '../types'
+import { getEffectiveDifficulty, normalizeDifficultyFactor } from './difficultyUtils'
 
 /**
  * Aplica el tipo de redondeo configurado a un valor numérico.
@@ -577,7 +578,9 @@ export function getUpcomingEvaluations(
           const requiredPoints = requiredMap.get(sub.id) ?? 0
           const daysFactor = 1 - daysUntil / daysAhead
           const noteFactor = sub.maxPoints > 0 ? requiredPoints / sub.maxPoints : 0
-          const urgencyScore = Math.round((daysFactor * 0.6 + noteFactor * 0.4) * 100)
+          const effectiveDifficulty = getEffectiveDifficulty(subject.difficulty, sub.difficulty || eval_.difficulty)
+          const difficultyFactor = normalizeDifficultyFactor(effectiveDifficulty)
+          const urgencyScore = Math.round((daysFactor * 0.5 + noteFactor * 0.35 + difficultyFactor * 0.15) * 100)
           results.push({ subject, evaluation: { ...sub, date: eval_.date }, daysUntil, requiredPoints, urgencyScore })
         }
       } else {
@@ -590,7 +593,9 @@ export function getUpcomingEvaluations(
         const requiredPoints = requiredMap.get(eval_.id) ?? 0
         const daysFactor = 1 - daysUntil / daysAhead
         const noteFactor = eval_.maxPoints > 0 ? requiredPoints / eval_.maxPoints : 0
-        const urgencyScore = Math.round((daysFactor * 0.6 + noteFactor * 0.4) * 100)
+        const effectiveDifficulty = getEffectiveDifficulty(subject.difficulty, eval_.difficulty)
+        const difficultyFactor = normalizeDifficultyFactor(effectiveDifficulty)
+        const urgencyScore = Math.round((daysFactor * 0.5 + noteFactor * 0.35 + difficultyFactor * 0.15) * 100)
         results.push({ subject, evaluation: eval_, daysUntil, requiredPoints, urgencyScore })
       }
     }

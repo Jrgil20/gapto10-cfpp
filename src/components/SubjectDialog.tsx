@@ -4,7 +4,9 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Switch } from './ui/switch'
-import { Subject } from '../types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Subject, DifficultyLevel } from '../types'
+import { getDifficultyLabel, getDifficultyColor } from '../lib/difficultyUtils'
 
 interface SubjectDialogProps {
   open: boolean
@@ -18,6 +20,7 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
   const [hasSplit, setHasSplit] = useState(subject?.hasSplit || false)
   const [theoryWeight, setTheoryWeight] = useState(subject?.theoryWeight?.toString() || '70')
   const [practiceWeight, setPracticeWeight] = useState(subject?.practiceWeight?.toString() || '30')
+  const [difficulty, setDifficulty] = useState<DifficultyLevel | undefined>(subject?.difficulty)
 
   const handleSave = () => {
     if (!name.trim()) return
@@ -33,13 +36,15 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
       name: name.trim(),
       hasSplit,
       theoryWeight: theory,
-      practiceWeight: practice
+      practiceWeight: practice,
+      ...(difficulty && { difficulty })
     })
 
     setName('')
     setHasSplit(false)
     setTheoryWeight('70')
     setPracticeWeight('30')
+    setDifficulty(undefined)
     onOpenChange(false)
   }
 
@@ -71,6 +76,22 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
               checked={hasSplit}
               onCheckedChange={setHasSplit}
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="difficulty">Dificultad (opcional)</Label>
+            <Select value={difficulty || ''} onValueChange={(val) => setDifficulty(val as DifficultyLevel || undefined)}>
+              <SelectTrigger id="difficulty">
+                <SelectValue placeholder="Sin especificar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin especificar</SelectItem>
+                <SelectItem value="easy">Fácil</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="hard">Difícil</SelectItem>
+                <SelectItem value="very-hard">Muy Difícil</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {hasSplit && (

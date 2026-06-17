@@ -1,12 +1,13 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { DotsSixVertical, ArrowsDownUp } from '@phosphor-icons/react'
 
-export type SortMode = 
+export type SortMode =
   | 'manual'           // Orden manual (drag-and-drop)
   | 'worst-first'       // Peor desempeño primero
   | 'best-first'        // Mejor desempeño primero
   | 'alphabetical-asc'  // Alfabético A-Z
   | 'alphabetical-desc'  // Alfabético Z-A
+  | 'difficulty-desc'   // Más difícil primero
 
 interface DashboardSortControlsProps {
   sortMode: SortMode
@@ -55,6 +56,9 @@ export function DashboardSortControls({
           </SelectItem>
           <SelectItem value="alphabetical-desc">
             <span>Alfabético (Z-A)</span>
+          </SelectItem>
+          <SelectItem value="difficulty-desc">
+            <span>Más difícil primero</span>
           </SelectItem>
         </SelectContent>
       </Select>
