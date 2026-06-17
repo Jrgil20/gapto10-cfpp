@@ -6,6 +6,7 @@ import { EvaluationDialog } from './components/EvaluationDialog'
 import { SubjectView } from './components/SubjectView'
 import { ConfigDialog } from './components/ConfigDialog'
 import { Dashboard } from './components/Dashboard'
+import { SemesterView } from './components/SemesterView'
 import { ExportImportDialog } from './components/ExportImportDialog'
 import { WelcomeDialog } from './components/WelcomeDialog'
 import { Button } from './components/ui/button'
@@ -13,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescri
 import { Card } from './components/ui/card'
 import { Separator } from './components/ui/separator'
 import { toast } from 'sonner'
-import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft, Question, Lightbulb, Star, GithubLogo, Info, Warning, Copy, FileText } from '@phosphor-icons/react'
+import { List, Plus, GearSix, Download, Upload, Trash, House, ArrowLeft, Question, Lightbulb, Star, GithubLogo, Info, Warning, Copy, FileText, ChartBar } from '@phosphor-icons/react'
 import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover'
 import { Alert, AlertDescription } from './components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './components/ui/dialog'
@@ -32,7 +33,7 @@ function App() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('pessimistic')
-  const [view, setView] = useState<'dashboard' | 'subject'>('dashboard')
+  const [view, setView] = useState<'dashboard' | 'subject' | 'semester'>('dashboard')
   const [exportImportDialogOpen, setExportImportDialogOpen] = useState(false)
   const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export')
   const [importData, setImportData] = useState<{ subjects: Subject[]; config?: Partial<Config>; exportDate?: string } | undefined>(undefined)
@@ -76,6 +77,11 @@ function App() {
   const handleBackToDashboard = () => {
     setSelectedSubjectId(null)
     setView('dashboard')
+  }
+
+  const handleOpenSemester = () => {
+    setView('semester')
+    setSheetOpen(false)
   }
 
   const handleSaveEvaluation = (evaluationData: Omit<Evaluation, 'id'>) => {
@@ -665,7 +671,7 @@ Total: 100% (20 pts.)
               </SheetContent>
             </Sheet>
 
-            {view === 'subject' && selectedSubject ? (
+            {view === 'subject' || view === 'semester' ? (
               <Button variant="ghost" size="icon" onClick={handleBackToDashboard} className="shrink-0">
                 <ArrowLeft size={20} className="text-primary" />
               </Button>
@@ -798,6 +804,13 @@ Total: 100% (20 pts.)
               </PopoverContent>
             </Popover>
 
+            {view !== 'semester' && (
+              <Button variant="outline" size="icon" onClick={handleOpenSemester} className="h-9 w-9 sm:h-10 sm:w-10" title="Vista semestral">
+                <ChartBar size={18} className="sm:hidden" />
+                <ChartBar size={20} className="hidden sm:block" />
+              </Button>
+            )}
+
             <Button variant="outline" size="icon" onClick={() => setConfigDialogOpen(true)} className="h-9 w-9 sm:h-10 sm:w-10">
               <GearSix size={18} className="sm:hidden" />
               <GearSix size={20} className="hidden sm:block" />
@@ -813,6 +826,14 @@ Total: 100% (20 pts.)
             config={configData}
             onSelectSubject={handleSelectSubject}
             onAddSubject={() => setSubjectDialogOpen(true)}
+          />
+        ) : view === 'semester' ? (
+          <SemesterView
+            subjects={subjectsData}
+            config={configData}
+            calculationMode={calculationMode}
+            onSelectSubject={handleSelectSubject}
+            onBack={handleBackToDashboard}
           />
         ) : selectedSubject && calculation && configData ? (
           <SubjectView

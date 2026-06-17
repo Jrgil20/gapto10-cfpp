@@ -87,3 +87,19 @@ export interface ProgressParams {
   target: number            // Peso total objetivo (usualmente 100)
   label?: string            // Etiqueta opcional para mensajes
 }
+
+export interface UpcomingEvaluation {
+  subject: Subject
+  evaluation: Evaluation
+  daysUntil: number
+  requiredPoints: number    // en puntos (modo pesimista)
+  urgencyScore: number      // 0–100
+}
+
+export interface SemesterSummary {
+  approved: Subject[]
+  safe: Subject[]           // en progreso, rendimiento >= 60%
+  atRisk: Subject[]         // en progreso, rendimiento < 60%
+  impossible: Subject[]
+  notStarted: Subject[]     // sin evaluaciones completadas
+}
