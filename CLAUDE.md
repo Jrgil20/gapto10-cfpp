@@ -248,4 +248,177 @@ Este proyecto es una aplicación académica con propósito educativo. Los cambio
 3. Seguir las convenciones establecidas
 4. Ser bien documentados
 
-¡Bienvenido a trabajar en GapTo10! 🚀
+---
+
+## 🔀 Estrategia de Ramas (Git)
+
+- **`main`**: Rama de producción. Los push a `main` disparan el deploy automático a GitHub Pages
+- **`develop`**: Rama de desarrollo activo. Los cambios se hacen aquí primero
+- **Pull Requests**: De `develop` → `main` cuando se quiere hacer release
+- **Feature branches**: Opcional, desde `develop` para features grandes
+
+**Regla**: Nunca hacer push directo a `main` sin pasar por `develop` o un PR.
+
+## 🛣️ Aliases de Importación
+
+El proyecto usa path alias `@/*` → `src/*` (configurado en `tsconfig.json` y `vite.config.ts`):
+
+```typescript
+// ✅ Correcto
+import { cn } from '@/lib/utils'
+import { Subject } from '@/types'
+
+// ❌ Evitar rutas relativas largas
+import { cn } from '../../../lib/utils'
+```
+
+**Regla**: Usar `@/` para imports desde `src/`. Las rutas relativas solo son aceptables para archivos en la misma carpeta o carpeta inmediatamente adyacente.
+
+## 🗄️ Registro de Claves de localStorage
+
+Las claves de `localStorage` siguen el prefijo `gapto10-`:
+
+| Clave | Tipo | Descripción |
+|-------|------|-------------|
+| `gapto10-subjects` | `Subject[]` | Lista de materias del usuario |
+| `gapto10-config` | `Partial<Config>` | Configuración personalizada (solo diferencias del default) |
+| `gapto10-welcome-shown` | `boolean` | Si el diálogo de bienvenida ya se mostró |
+| `gapto10-subject-order` | `string[]` | IDs de materias en orden personalizado |
+
+**Reglas**:
+- Nuevas claves DEBEN usar el prefijo `gapto10-`
+- Agregar nuevas claves a esta tabla al crearlas
+- No almacenar datos sensibles en localStorage
+- Usar `useLocalStorage` hook para acceder (sincroniza entre tabs)
+
+## 🎨 Convenciones de Estilos
+
+### Tailwind CSS + `cn()`
+
+Usar la utilidad `cn()` de `@/lib/utils` para combinar clases condicionalmente:
+
+```typescript
+// ✅ Correcto
+<div className={cn("p-4 rounded-lg", isActive && "bg-primary text-white")} />
+
+// ❌ No usar template literals para condicionales
+<div className={`p-4 rounded-lg ${isActive ? 'bg-primary' : ''}`} />
+```
+
+### Componentes UI (shadcn/Radix)
+
+- Los componentes en `src/components/ui/` siguen el patrón shadcn (wrappers sobre Radix UI)
+- No modificar componentes UI sin razón — son base compartida
+- Para nuevos componentes UI, seguir el mismo patrón de los existentes
+- Variantes con `class-variance-authority` (`cva`)
+
+### Iconos
+
+El proyecto usa **Phosphor Icons** (`@phosphor-icons/react`):
+
+```typescript
+// ✅ Importar iconos individuales
+import { House, GearSix, Plus } from '@phosphor-icons/react'
+
+// ❌ No usar lucide-react para nuevos iconos (legacy, solo en componentes ui/)
+```
+
+**Nota**: `lucide-react` existe como dependencia pero solo se usa internamente en componentes `ui/`. Para componentes de features, usar siempre Phosphor Icons.
+
+## 🧩 Patrones de Estado
+
+### Estado Global en App.tsx
+
+Todo el estado global vive en `App.tsx` y se pasa por props:
+
+```
+App.tsx (estado) → props → Componentes hijos → handlers → actualizar estado
+```
+
+**Reglas**:
+- No agregar Context API ni state managers (Redux, Zustand, etc.) sin autorización
+- Props drilling es aceptable dado el tamaño del proyecto
+- Usar `useMemo` para cálculos derivados costosos
+- Los handlers que modifican estado se definen en `App.tsx` y se pasan como props
+
+### Navegación Interna
+
+La "navegación" es un simple estado `view`:
+
+```typescript
+const [view, setView] = useState<'dashboard' | 'subject' | 'semester'>('dashboard')
+```
+
+No hay router. No agregar `react-router` sin autorización.
+
+## 📣 Notificaciones (Toasts)
+
+Usar `sonner` para feedback al usuario:
+
+```typescript
+import { toast } from 'sonner'
+
+toast.success('Materia creada')
+toast.error('Error al importar datos')
+```
+
+**Regla**: Usar toasts solo para acciones del usuario (crear, editar, eliminar, importar/exportar). No para estados derivados o cálculos.
+
+## 🚨 Manejo de Errores
+
+- `react-error-boundary` con `ErrorFallback.tsx` envuelve la app
+- Errores de localStorage se capturan con try/catch en `useLocalStorage`
+- Validación de datos importados antes de aplicar
+
+## 🚀 CI/CD y Deploy
+
+### GitHub Pages (Automático)
+
+- **Trigger**: Push a `main` o dispatch manual
+- **Pipeline**: `.github/workflows/deploy.yml`
+- **URL**: `https://jrgil20.github.io/gapto10-cfpp/`
+- **Base URL**: Se detecta automáticamente con `process.env.CI`
+
+### Build
+
+```bash
+pnpm build    # tsc -b && vite build → dist/
+```
+
+- Chunks separados: `vendor` (react, react-dom) y `ui` (radix)
+- Minificación con Terser
+- Sin sourcemaps en producción
+
+**Regla**: Verificar que `pnpm build` pasa antes de hacer merge a `main`.
+
+## 📅 Manejo de Fechas
+
+Usar **date-fns** para manipulación de fechas:
+
+```typescript
+import { differenceInDays } from 'date-fns'
+```
+
+- Formato de fechas: `YYYY-MM-DD` (string ISO en los tipos)
+- No usar `moment.js` ni `dayjs`
+
+## 🧪 Convenciones de Testing
+
+- Framework: **Vitest** (entorno `node`)
+- Tests co-ubicados: `calculations.test.ts` junto a `calculations.ts`
+- Prioridad de testing: `src/lib/calculations.ts` es el archivo más crítico
+- Ejecutar `pnpm test` antes de cualquier commit que toque lógica de cálculos
+
+## 🔢 Configuración por Defecto
+
+Valores default definidos en `src/lib/configUtils.ts`:
+
+| Campo | Default | Descripción |
+|-------|---------|-------------|
+| `defaultMaxPoints` | `20` | Puntos máximos por evaluación |
+| `percentagePerPoint` | `5` | % que vale cada punto |
+| `passingPercentage` | `50` | % mínimo para aprobar |
+| `showJsonInExportImport` | `false` | Mostrar JSON raw en diálogo |
+| `roundingType` | `'standard'` | Tipo de redondeo |
+
+**Regla**: Al agregar nuevas opciones de Config, agregarlas a `DEFAULT_CONFIG` en `configUtils.ts` y al tipo `Config` en `types.ts`. La función `normalizeConfig` las incluirá automáticamente.
