@@ -260,7 +260,7 @@ export function EvaluationDialog({
           maxPoints: maxPointsNum,
           section: subject.hasSplit ? section : undefined,
           isSummative: isSummative,
-          ...(difficulty && { difficulty })
+          difficulty
         })
       }
 
@@ -304,7 +304,7 @@ export function EvaluationDialog({
         section: subject.hasSplit ? section : undefined,
         isSummative: isSummative,
         subEvaluations: finalSubEvaluations,
-        ...(difficulty && { difficulty })
+        difficulty
       })
     }
 

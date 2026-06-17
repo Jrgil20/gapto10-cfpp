@@ -47,7 +47,7 @@ export function SubjectDialog({ open, onOpenChange, onSave, subject }: SubjectDi
       hasSplit,
       theoryWeight: theory,
       practiceWeight: practice,
-      ...(difficulty && { difficulty })
+      difficulty
     })
 
     setName('')
