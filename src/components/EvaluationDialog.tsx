@@ -260,7 +260,7 @@ export function EvaluationDialog({
           maxPoints: maxPointsNum,
           section: subject.hasSplit ? section : undefined,
           isSummative: isSummative,
-          ...(difficulty && { difficulty })
+          difficulty
         })
       }
 
@@ -304,7 +304,7 @@ export function EvaluationDialog({
         section: subject.hasSplit ? section : undefined,
         isSummative: isSummative,
         subEvaluations: finalSubEvaluations,
-        ...(difficulty && { difficulty })
+        difficulty
       })
     }
 
@@ -560,12 +560,12 @@ export function EvaluationDialog({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="eval-difficulty">Dificultad (opcional)</Label>
-            <Select value={difficulty || ''} onValueChange={(val) => setDifficulty(val as DifficultyLevel || undefined)}>
+            <Select value={difficulty || 'unspecified'} onValueChange={(val) => setDifficulty(val === 'unspecified' ? undefined : (val as DifficultyLevel))}>
               <SelectTrigger id="eval-difficulty">
                 <SelectValue placeholder="Sin especificar" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sin especificar</SelectItem>
+                <SelectItem value="unspecified">Sin especificar</SelectItem>
                 <SelectItem value="easy">Fácil</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="hard">Difícil</SelectItem>
